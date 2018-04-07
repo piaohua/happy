@@ -1,0 +1,58 @@
+{application, happy,
+ [{description, "An OTP application"},
+  {vsn, "0.1.0"},
+  {registered, [happy_sup]},
+  {mod, { happy_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    crypto,
+    compiler,
+    cowboy,
+    lager,
+    syntax_tools
+   ]},
+  {env,[]},
+  {modules, [happy]},
+
+  {maintainers, []},
+  {licenses, ["Apache 2.0"]},
+  {links, []},
+
+{lager, [
+          {log_root, "./log"},
+
+          %% Default handlers for lager/lager_event
+          %% {handlers, [
+          %%             {lager_console_backend, [{level, info}]},
+          %%             {lager_file_backend, [{file, "error.log"}, {level, error}]},
+          %%             {lager_file_backend, [{file, "console.log"}, {level, info}]}
+          %%            ]},
+          %% Custom Formatting
+          {handlers, [
+              {lager_console_backend, [{level, info}, {formatter, lager_default_formatter},
+                  {formatter_config, [time," [",severity,"] ", message, "\n"]}]},
+              {lager_file_backend, [{file, "error.log"}, {level, error}, {formatter, lager_default_formatter},
+                  {formatter_config, [date, " ", time," [",severity,"] ",pid, " ", message, "\n"]}]},
+              {lager_file_backend, [{file, "console.log"}, {level, info}]}
+          ]},
+
+          %% Any other sinks
+          {extra_sinks,
+           [
+            {audit_lager_event,
+             [{handlers,
+               [{lager_file_backend,
+                 [{file, "sink1.log"},
+                  {level, info}
+                 ]
+                }]
+              },
+              {async_threshold, 500},
+              {async_threshold_window, 50}]
+            }]
+          }
+         ]
+ }
+ ]}.
+
