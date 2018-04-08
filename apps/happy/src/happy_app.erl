@@ -26,6 +26,7 @@ start(_StartType, _StartArgs) ->
     ssl:start(),
     %% 启动mongodb服务
     application:ensure_all_started(mongodb),
+    application:start(cache),
     %% 初始化ETS
     init_ets(),
     {ok, Port} = application:get_env(happy, ws_port),

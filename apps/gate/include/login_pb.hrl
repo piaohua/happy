@@ -24,16 +24,6 @@
         }).
 -endif.
 
--ifndef('SWXLOGIN_PB_H').
--define('SWXLOGIN_PB_H', true).
--record('SWxLogin',
-        {code = 0               :: non_neg_integer() | undefined, % = 1, 32 bits
-         userid = <<>>          :: iodata() | undefined, % = 2
-         token = <<>>           :: iodata() | undefined, % = 3
-         error = 0              :: non_neg_integer() | undefined % = 4, 32 bits
-        }).
--endif.
-
 -ifndef('CLOGIN_PB_H').
 -define('CLOGIN_PB_H', true).
 -record('CLogin',
@@ -41,6 +31,16 @@
          phone = <<>>           :: iodata() | undefined, % = 2
          password = <<>>        :: iodata() | undefined, % = 3
          type = 0               :: non_neg_integer() | undefined % = 4, 32 bits
+        }).
+-endif.
+
+-ifndef('SWXLOGIN_PB_H').
+-define('SWXLOGIN_PB_H', true).
+-record('SWxLogin',
+        {code = 0               :: non_neg_integer() | undefined, % = 1, 32 bits
+         userid = <<>>          :: iodata() | undefined, % = 2
+         token = <<>>           :: iodata() | undefined, % = 3
+         error = 0              :: non_neg_integer() | undefined % = 4, 32 bits
         }).
 -endif.
 
