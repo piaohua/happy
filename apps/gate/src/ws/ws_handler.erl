@@ -20,20 +20,17 @@
 init(Req, Opts) ->
     lager:debug("init Request: ~p", [Req]),
     {cowboy_websocket, Req, Opts, #{
+        compress => true, %% frame compression extension
         idle_timeout => 30000, %% It defaults to 60000
         max_frame_size => 1024}}.
 
 websocket_init(State) ->
-    erlang:start_timer(1000, self(), <<"Hello!">>),
+    %erlang:start_timer(1000, self(), <<"Hello!">>),
     {ok, State}.
 
-websocket_handle({pong, Msg}, State) ->
-    lager:info("websocket_handle pong: ~p", [Msg]),
-    {reply, {pong, << "" >>}, State};
-
-websocket_handle({ping, Msg}, State) ->
-    lager:info("websocket_handle ping: ~p", [Msg]),
-    {reply, {pong, << "" >>}, State};
+websocket_handle(ping, State) ->
+    lager:debug("websocket_handle ping"),
+    {reply, pong, State};
 
 websocket_handle({text, Msg}, State) ->
     lager:info("websocket_handle Request: ~p", [Msg]),
@@ -47,7 +44,7 @@ websocket_handle(_Data, State) ->
 
 websocket_info({timeout, _Ref, Msg}, State) ->
     lager:info("websocket_info Request: ~p", [Msg]),
-    erlang:start_timer(1000, self(), <<"How' you doin'?">>),
+    %erlang:start_timer(1000, self(), <<"How' you doin'?">>),
     {reply, {text, Msg}, State};
 
 websocket_info(stop, State) ->
