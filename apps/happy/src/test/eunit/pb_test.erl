@@ -15,8 +15,8 @@
 % This imports the record for you to use from the generated file
 -include("login_pb.hrl").
 
-encode_msg_test() ->
-    Msg = #'CLogin'{code = 1},
+pb_msg_test() ->
+    Msg = #'CLogin'{phone = "137"},
     Bin = login_pb:encode_msg(Msg),
     Msg2 = login_pb:decode_msg(Bin, 'CLogin'),
     ?_assert(Msg =:= Msg2).

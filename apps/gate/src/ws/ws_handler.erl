@@ -13,6 +13,8 @@
 -export([websocket_info/2]).
 -export([websocket_terminate/2]).
 
+-include("../../include/ws.hrl").
+
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
@@ -24,9 +26,9 @@ init(Req, Opts) ->
         idle_timeout => 30000, %% It defaults to 60000
         max_frame_size => 1024}}.
 
-websocket_init(State) ->
+websocket_init(_State) ->
     %erlang:start_timer(1000, self(), <<"Hello!">>),
-    {ok, State}.
+    {ok, #ws{}}.
 
 websocket_handle(ping, State) ->
     lager:debug("websocket_handle ping"),
