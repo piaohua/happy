@@ -9,6 +9,8 @@
 
 -export([init/2]).
 
+-include("../../include/define.hrl").
+
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
@@ -22,7 +24,7 @@ init(Req0, Opts) ->
 echo(<<"GET">>, undefined, Req) ->
 	cowboy_req:reply(400, #{}, <<"Missing echo parameter.">>, Req);
 echo(<<"GET">>, Echo, Req) ->
-    lager:info("echo get: ~p", [Echo]),
+    ?INFO("echo get: ~p", [Echo]),
 	cowboy_req:reply(200, #{
 		<<"content-type">> => <<"text/plain; charset=utf-8">>
 	}, Echo, Req);

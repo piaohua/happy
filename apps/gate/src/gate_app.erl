@@ -12,6 +12,9 @@
 %% Application callbacks
 -export([start/2, stop/1]).
 
+-include("../include/online.hrl").
+-include("../include/offline.hrl").
+
 %%====================================================================
 %% API
 %%====================================================================
@@ -21,6 +24,8 @@ start(_StartType, _StartArgs) ->
     %% 启动服务
     inets:start(),
     ssl:start(),
+    %% 启动cache服务
+    application:start(cache),
     %% 初始化ETS
     init_ets(),
     {ok, Port} = application:get_env(gate, ws_port),
@@ -42,5 +47,8 @@ stop(_State) ->
 %%====================================================================
 
 init_ets() ->
-    %% TODO
+    %% 在线表
+    ets:new(online, [{keypos, #online.id}, named_table, public, set]),
+    %% 离线表
+    ets:new(offline, [{keypos, #offline.account_id}, named_table, public, set]),
     ok.

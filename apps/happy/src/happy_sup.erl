@@ -33,6 +33,7 @@ start_link(Args) ->
 init([_Port]) ->
     Procs = [
         % {role, {role, start_link, [Port]}, permanent, 10000, worker, [role]},
+        {node_monitor, {node_monitor, start_link, []}, permanent, 10000, worker, [node_monitor]},
         {mongo_sup, {mongo_sup, start_link, []}, permanent, 10000, supervisor, [mongo_sup]}
     ],
     {ok, { {one_for_all, 10, 10}, Procs} }.
