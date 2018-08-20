@@ -14,6 +14,7 @@
 -export([websocket_terminate/2]).
 
 -include("../../include/define.hrl").
+-include("../../include/login_pb.hrl").
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -35,10 +36,29 @@ websocket_handle(ping, State) ->
     {reply, pong, State};
 
 websocket_handle({text, Msg}, State) ->
-    ?INFO("websocket_handle Request: ~p", [Msg]),
+    ?INFO("happy websocket_handle Request: ~p", [Msg]),
     %% self() ! stop,
     %% self() ! close,
-    {reply, {text, << "That's what she said! ", Msg/binary >>}, State};
+    S2C = #'SLogin'{
+             userid = <<"222">>
+            },
+    case packet:p(S2C) of 
+        {ok, Bin} ->
+            ?INFO("Bin: ~p", [Bin]);
+        {Result, Bin} ->
+            ?INFO("Result: ~p, Bin: ~p", [Result, Bin])
+    end,
+    C2S = #'CLogin'{
+             phone = <<"111">>,
+             password = <<"sss">>
+             },
+    case unpack:p(C2S) of 
+        {ok, Bin2} ->
+            ?INFO("Bin: ~p", [Bin2]);
+        {Result2, Bin2} ->
+            ?INFO("Result: ~p, Bin: ~p", [Result2, Bin2])
+    end,
+    {reply, {text, << "That's what she said! happy ", Msg/binary >>}, State};
 
 websocket_handle(_Data, State) ->
     ?INFO("websocket_handle unknown Request: ~p", [_Data]),
