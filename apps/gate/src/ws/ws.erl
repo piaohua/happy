@@ -1,5 +1,5 @@
 %%%-------------------------------------------------------------------
-%% @doc happy ws API
+%% @doc gate ws API
 %% @author piaohua<814004090@qq.com>
 %% @end 2018-03-30 22:21:26
 %%%-------------------------------------------------------------------
@@ -16,9 +16,9 @@
 start_link(Port) ->
     Dispatch = cowboy_router:compile([
         {'_', [
-             {"/", cowboy_static, {priv_file, happy, "index.html"}},
+             {"/", cowboy_static, {priv_file, gate, "index.html"}},
              {"/websocket", ws_handler, []},
-             {"/static/[...]", cowboy_static, {priv_dir, happy, "static"}}
+             {"/static/[...]", cowboy_static, {priv_dir, gate, "static"}}
         ]}
     ]),
     case cowboy:start_clear(http, [{port, Port}, {max_connections, 1024}],

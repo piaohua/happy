@@ -50,5 +50,5 @@ init_ets() ->
     %% 在线表
     ets:new(online, [{keypos, #online.id}, named_table, public, set]),
     %% 离线表
-    ets:new(offline, [{keypos, #offline.account_id}, named_table, public, set]),
+    ets:new(offline, [{keypos, #offline.account}, named_table, public, set]),
     ok.

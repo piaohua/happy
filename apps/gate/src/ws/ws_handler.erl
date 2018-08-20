@@ -55,6 +55,7 @@ websocket_info(stop, State) ->
     {stop, State};
 
 websocket_info(close, State) ->
+    ?INFO("websocket_info close"),
     {reply, {close, 1000, <<"some-reason">>}, State};
 
 websocket_info(_Info, State) ->

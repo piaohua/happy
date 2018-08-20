@@ -18,6 +18,13 @@ Build
     protobuf
     websocket
 
+```
+
+> rebar3 --version
+rebar 3.5.0 on Erlang/OTP 20 Erts 9.0.5
+
+```
+
 TODO
 -----
     tcp连接池
