@@ -36,6 +36,10 @@ websocket_handle(ping, State) ->
     ?DEBUG("websocket_handle ping"),
     {reply, pong, State};
 
+websocket_handle({binary, BinData}, State) ->
+    ?DEBUG("happy websocket_handle Request: ~p", [BinData]),
+    {reply, {binary, BinData}, State};
+
 websocket_handle({text, Msg}, State) ->
     ?INFO("gate websocket_handle Request: ~p", [Msg]),
     %% self() ! stop,

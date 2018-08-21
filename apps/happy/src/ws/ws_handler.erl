@@ -35,8 +35,12 @@ websocket_handle(ping, State) ->
     ?DEBUG("websocket_handle ping"),
     {reply, pong, State};
 
+websocket_handle({binary, BinData}, State) ->
+    ?DEBUG("happy websocket_handle Request: ~p", [BinData]),
+    {reply, {binary, BinData}, State};
+
 websocket_handle({text, Msg}, State) ->
-    ?INFO("happy websocket_handle Request: ~p", [Msg]),
+    ?DEBUG("happy websocket_handle Request: ~p", [Msg]),
     %% self() ! stop,
     %% self() ! close,
     S2C = #'SLogin'{
@@ -44,9 +48,9 @@ websocket_handle({text, Msg}, State) ->
             },
     case packet:p(S2C) of 
         {ok, Bin} ->
-            ?INFO("Bin: ~p", [Bin]);
+            ?DEBUG("Bin: ~p", [Bin]);
         {Result, Bin} ->
-            ?INFO("Result: ~p, Bin: ~p", [Result, Bin])
+            ?DEBUG("Result: ~p, Bin: ~p", [Result, Bin])
     end,
     C2S = #'CLogin'{
              phone = <<"111">>,
@@ -54,9 +58,9 @@ websocket_handle({text, Msg}, State) ->
              },
     case unpack:p(C2S) of 
         {ok, Bin2} ->
-            ?INFO("Bin: ~p", [Bin2]);
+            ?DEBUG("Bin: ~p", [Bin2]);
         {Result2, Bin2} ->
-            ?INFO("Result: ~p, Bin: ~p", [Result2, Bin2])
+            ?DEBUG("Result: ~p, Bin: ~p", [Result2, Bin2])
     end,
     {reply, {text, << "That's what she said! happy ", Msg/binary >>}, State};
 
