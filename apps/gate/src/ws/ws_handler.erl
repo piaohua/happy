@@ -29,7 +29,7 @@ init(Req, Opts) ->
         max_frame_size => 1024}}.
 
 websocket_init(_State) ->
-    %erlang:start_timer(1000, self(), <<"Hello!">>),
+    erlang:start_timer(1000, self(), <<"Hello!">>),
     {ok, #ws{}}.
 
 websocket_handle(ping, State) ->
@@ -71,7 +71,7 @@ websocket_handle(_Data, State) ->
 
 websocket_info({timeout, _Ref, Msg}, State) ->
     ?INFO("websocket_info Request: ~p", [Msg]),
-    %erlang:start_timer(1000, self(), <<"How' you doin'?">>),
+    erlang:start_timer(1000, self(), <<"How' you doin'?">>),
     {reply, {text, Msg}, State};
 
 websocket_info(stop, State) ->

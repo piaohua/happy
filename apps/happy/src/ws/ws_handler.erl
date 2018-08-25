@@ -32,15 +32,15 @@ websocket_init(State) ->
     {ok, State}.
 
 websocket_handle(ping, State) ->
-    ?DEBUG("websocket_handle ping"),
+    ?INFO("websocket_handle ping"),
     {reply, pong, State};
 
 websocket_handle({binary, BinData}, State) ->
-    ?DEBUG("happy websocket_handle Request: ~p", [BinData]),
+    ?INFO("happy websocket_handle Request: ~p", [BinData]),
     {reply, {binary, BinData}, State};
 
 websocket_handle({text, Msg}, State) ->
-    ?DEBUG("happy websocket_handle Request: ~p", [Msg]),
+    ?INFO("happy websocket_handle Request: ~p", [Msg]),
     %% self() ! stop,
     %% self() ! close,
     S2C = #'SLogin'{
@@ -62,6 +62,15 @@ websocket_handle({text, Msg}, State) ->
         {Result2, Bin2} ->
             ?DEBUG("Result: ~p, Bin: ~p", [Result2, Bin2])
     end,
+    %%
+    %Out = os:cmd("cat /dev/urandom | od -x | tr -d ' ' | head -n 1"),
+    %?DEBUG("out ~p", [Out]),
+    %%
+    Mac = aes:sha_example(),
+    ?INFO("Mac ~p", [Mac]),
+    B = aes:aes_example(),
+    ?INFO("Mac ~p", [B]),
+    %%
     {reply, {text, << "That's what she said! happy ", Msg/binary >>}, State};
 
 websocket_handle(_Data, State) ->

@@ -9,6 +9,8 @@ Build
     $ rebar3 compile
     $ rebar3 shell --apps=happy --config=./config/sys.config
     $ rebar3 shell --apps=gate --config=./config/sys.gate.config
+    $ rebar3 as prod release -n happy
+    $ rebar3 as prod tar
 
 ## Document
 -----

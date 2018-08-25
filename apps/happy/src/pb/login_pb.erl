@@ -30,20 +30,20 @@
 -export_type([]).
 
 %% message types
--type 'SWxLogin'() :: #'SWxLogin'{}.
--type 'CLogin'() :: #'CLogin'{}.
--type 'SLogin'() :: #'SLogin'{}.
--type 'SRegist'() :: #'SRegist'{}.
--type 'SLoginOut'() :: #'SLoginOut'{}.
 -type 'CRegist'() :: #'CRegist'{}.
+-type 'SWxLogin'() :: #'SWxLogin'{}.
+-type 'SLogin'() :: #'SLogin'{}.
+-type 'CLogin'() :: #'CLogin'{}.
+-type 'SRegist'() :: #'SRegist'{}.
 -type 'CWxLogin'() :: #'CWxLogin'{}.
--export_type(['SWxLogin'/0, 'CLogin'/0, 'SLogin'/0, 'SRegist'/0, 'SLoginOut'/0, 'CRegist'/0, 'CWxLogin'/0]).
+-type 'SLoginOut'() :: #'SLoginOut'{}.
+-export_type(['CRegist'/0, 'SWxLogin'/0, 'SLogin'/0, 'CLogin'/0, 'SRegist'/0, 'CWxLogin'/0, 'SLoginOut'/0]).
 
--spec encode_msg(#'SWxLogin'{} | #'CLogin'{} | #'SLogin'{} | #'SRegist'{} | #'SLoginOut'{} | #'CRegist'{} | #'CWxLogin'{}) -> binary().
+-spec encode_msg(#'CRegist'{} | #'SWxLogin'{} | #'SLogin'{} | #'CLogin'{} | #'SRegist'{} | #'CWxLogin'{} | #'SLoginOut'{}) -> binary().
 encode_msg(Msg) -> encode_msg(Msg, []).
 
 
--spec encode_msg(#'SWxLogin'{} | #'CLogin'{} | #'SLogin'{} | #'SRegist'{} | #'SLoginOut'{} | #'CRegist'{} | #'CWxLogin'{}, list()) -> binary().
+-spec encode_msg(#'CRegist'{} | #'SWxLogin'{} | #'SLogin'{} | #'CLogin'{} | #'SRegist'{} | #'CWxLogin'{} | #'SLoginOut'{}, list()) -> binary().
 encode_msg(Msg, Opts) ->
     case proplists:get_bool(verify, Opts) of
       true -> verify_msg(Msg, Opts);
@@ -51,148 +51,16 @@ encode_msg(Msg, Opts) ->
     end,
     TrUserData = proplists:get_value(user_data, Opts),
     case Msg of
-      #'SWxLogin'{} -> e_msg_SWxLogin(Msg, TrUserData);
-      #'CLogin'{} -> e_msg_CLogin(Msg, TrUserData);
-      #'SLogin'{} -> e_msg_SLogin(Msg, TrUserData);
-      #'SRegist'{} -> e_msg_SRegist(Msg, TrUserData);
-      #'SLoginOut'{} -> e_msg_SLoginOut(Msg, TrUserData);
       #'CRegist'{} -> e_msg_CRegist(Msg, TrUserData);
-      #'CWxLogin'{} -> e_msg_CWxLogin(Msg, TrUserData)
+      #'SWxLogin'{} -> e_msg_SWxLogin(Msg, TrUserData);
+      #'SLogin'{} -> e_msg_SLogin(Msg, TrUserData);
+      #'CLogin'{} -> e_msg_CLogin(Msg, TrUserData);
+      #'SRegist'{} -> e_msg_SRegist(Msg, TrUserData);
+      #'CWxLogin'{} -> e_msg_CWxLogin(Msg, TrUserData);
+      #'SLoginOut'{} -> e_msg_SLoginOut(Msg, TrUserData)
     end.
 
 
-
-e_msg_SWxLogin(Msg, TrUserData) ->
-    e_msg_SWxLogin(Msg, <<>>, TrUserData).
-
-
-e_msg_SWxLogin(#'SWxLogin'{userid = F1, token = F2,
-			   error = F3},
-	       Bin, TrUserData) ->
-    B1 = if F1 == undefined -> Bin;
-	    true ->
-		begin
-		  TrF1 = id(F1, TrUserData),
-		  case is_empty_string(TrF1) of
-		    true -> Bin;
-		    false -> e_type_string(TrF1, <<Bin/binary, 10>>)
-		  end
-		end
-	 end,
-    B2 = if F2 == undefined -> B1;
-	    true ->
-		begin
-		  TrF2 = id(F2, TrUserData),
-		  case is_empty_string(TrF2) of
-		    true -> B1;
-		    false -> e_type_string(TrF2, <<B1/binary, 18>>)
-		  end
-		end
-	 end,
-    if F3 == undefined -> B2;
-       true ->
-	   begin
-	     TrF3 = id(F3, TrUserData),
-	     if TrF3 =:= 0 -> B2;
-		true -> e_varint(TrF3, <<B2/binary, 24>>)
-	     end
-	   end
-    end.
-
-e_msg_CLogin(Msg, TrUserData) ->
-    e_msg_CLogin(Msg, <<>>, TrUserData).
-
-
-e_msg_CLogin(#'CLogin'{phone = F1, password = F2}, Bin,
-	     TrUserData) ->
-    B1 = if F1 == undefined -> Bin;
-	    true ->
-		begin
-		  TrF1 = id(F1, TrUserData),
-		  case is_empty_string(TrF1) of
-		    true -> Bin;
-		    false -> e_type_string(TrF1, <<Bin/binary, 10>>)
-		  end
-		end
-	 end,
-    if F2 == undefined -> B1;
-       true ->
-	   begin
-	     TrF2 = id(F2, TrUserData),
-	     case is_empty_string(TrF2) of
-	       true -> B1;
-	       false -> e_type_string(TrF2, <<B1/binary, 18>>)
-	     end
-	   end
-    end.
-
-e_msg_SLogin(Msg, TrUserData) ->
-    e_msg_SLogin(Msg, <<>>, TrUserData).
-
-
-e_msg_SLogin(#'SLogin'{userid = F1, error = F2}, Bin,
-	     TrUserData) ->
-    B1 = if F1 == undefined -> Bin;
-	    true ->
-		begin
-		  TrF1 = id(F1, TrUserData),
-		  case is_empty_string(TrF1) of
-		    true -> Bin;
-		    false -> e_type_string(TrF1, <<Bin/binary, 10>>)
-		  end
-		end
-	 end,
-    if F2 == undefined -> B1;
-       true ->
-	   begin
-	     TrF2 = id(F2, TrUserData),
-	     if TrF2 =:= 0 -> B1;
-		true -> e_varint(TrF2, <<B1/binary, 16>>)
-	     end
-	   end
-    end.
-
-e_msg_SRegist(Msg, TrUserData) ->
-    e_msg_SRegist(Msg, <<>>, TrUserData).
-
-
-e_msg_SRegist(#'SRegist'{userid = F1, error = F2}, Bin,
-	      TrUserData) ->
-    B1 = if F1 == undefined -> Bin;
-	    true ->
-		begin
-		  TrF1 = id(F1, TrUserData),
-		  case is_empty_string(TrF1) of
-		    true -> Bin;
-		    false -> e_type_string(TrF1, <<Bin/binary, 10>>)
-		  end
-		end
-	 end,
-    if F2 == undefined -> B1;
-       true ->
-	   begin
-	     TrF2 = id(F2, TrUserData),
-	     if TrF2 =:= 0 -> B1;
-		true -> e_varint(TrF2, <<B1/binary, 16>>)
-	     end
-	   end
-    end.
-
-e_msg_SLoginOut(Msg, TrUserData) ->
-    e_msg_SLoginOut(Msg, <<>>, TrUserData).
-
-
-e_msg_SLoginOut(#'SLoginOut'{rtype = F1}, Bin,
-		TrUserData) ->
-    if F1 == undefined -> Bin;
-       true ->
-	   begin
-	     TrF1 = id(F1, TrUserData),
-	     if TrF1 =:= 0 -> Bin;
-		true -> e_varint(TrF1, <<Bin/binary, 8>>)
-	     end
-	   end
-    end.
 
 e_msg_CRegist(Msg, TrUserData) ->
     e_msg_CRegist(Msg, <<>>, TrUserData).
@@ -232,6 +100,122 @@ e_msg_CRegist(#'CRegist'{nickname = F1, phone = F2,
 	   end
     end.
 
+e_msg_SWxLogin(Msg, TrUserData) ->
+    e_msg_SWxLogin(Msg, <<>>, TrUserData).
+
+
+e_msg_SWxLogin(#'SWxLogin'{userid = F1, token = F2,
+			   error = F3},
+	       Bin, TrUserData) ->
+    B1 = if F1 == undefined -> Bin;
+	    true ->
+		begin
+		  TrF1 = id(F1, TrUserData),
+		  case is_empty_string(TrF1) of
+		    true -> Bin;
+		    false -> e_type_string(TrF1, <<Bin/binary, 10>>)
+		  end
+		end
+	 end,
+    B2 = if F2 == undefined -> B1;
+	    true ->
+		begin
+		  TrF2 = id(F2, TrUserData),
+		  case is_empty_string(TrF2) of
+		    true -> B1;
+		    false -> e_type_string(TrF2, <<B1/binary, 18>>)
+		  end
+		end
+	 end,
+    if F3 == undefined -> B2;
+       true ->
+	   begin
+	     TrF3 = id(F3, TrUserData),
+	     if TrF3 =:= 0 -> B2;
+		true -> e_varint(TrF3, <<B2/binary, 24>>)
+	     end
+	   end
+    end.
+
+e_msg_SLogin(Msg, TrUserData) ->
+    e_msg_SLogin(Msg, <<>>, TrUserData).
+
+
+e_msg_SLogin(#'SLogin'{userid = F1, error = F2}, Bin,
+	     TrUserData) ->
+    B1 = if F1 == undefined -> Bin;
+	    true ->
+		begin
+		  TrF1 = id(F1, TrUserData),
+		  case is_empty_string(TrF1) of
+		    true -> Bin;
+		    false -> e_type_string(TrF1, <<Bin/binary, 10>>)
+		  end
+		end
+	 end,
+    if F2 == undefined -> B1;
+       true ->
+	   begin
+	     TrF2 = id(F2, TrUserData),
+	     if TrF2 =:= 0 -> B1;
+		true -> e_varint(TrF2, <<B1/binary, 16>>)
+	     end
+	   end
+    end.
+
+e_msg_CLogin(Msg, TrUserData) ->
+    e_msg_CLogin(Msg, <<>>, TrUserData).
+
+
+e_msg_CLogin(#'CLogin'{phone = F1, password = F2}, Bin,
+	     TrUserData) ->
+    B1 = if F1 == undefined -> Bin;
+	    true ->
+		begin
+		  TrF1 = id(F1, TrUserData),
+		  case is_empty_string(TrF1) of
+		    true -> Bin;
+		    false -> e_type_string(TrF1, <<Bin/binary, 10>>)
+		  end
+		end
+	 end,
+    if F2 == undefined -> B1;
+       true ->
+	   begin
+	     TrF2 = id(F2, TrUserData),
+	     case is_empty_string(TrF2) of
+	       true -> B1;
+	       false -> e_type_string(TrF2, <<B1/binary, 18>>)
+	     end
+	   end
+    end.
+
+e_msg_SRegist(Msg, TrUserData) ->
+    e_msg_SRegist(Msg, <<>>, TrUserData).
+
+
+e_msg_SRegist(#'SRegist'{userid = F1, error = F2}, Bin,
+	      TrUserData) ->
+    B1 = if F1 == undefined -> Bin;
+	    true ->
+		begin
+		  TrF1 = id(F1, TrUserData),
+		  case is_empty_string(TrF1) of
+		    true -> Bin;
+		    false -> e_type_string(TrF1, <<Bin/binary, 10>>)
+		  end
+		end
+	 end,
+    if F2 == undefined -> B1;
+       true ->
+	   begin
+	     TrF2 = id(F2, TrUserData),
+	     if TrF2 =:= 0 -> B1;
+		true -> e_varint(TrF2, <<B1/binary, 16>>)
+	     end
+	   end
+    end.
+
 e_msg_CWxLogin(Msg, TrUserData) ->
     e_msg_CWxLogin(Msg, <<>>, TrUserData).
 
@@ -255,6 +239,22 @@ e_msg_CWxLogin(#'CWxLogin'{wxcode = F1, token = F2},
 	     case is_empty_string(TrF2) of
 	       true -> B1;
 	       false -> e_type_string(TrF2, <<B1/binary, 18>>)
+	     end
+	   end
+    end.
+
+e_msg_SLoginOut(Msg, TrUserData) ->
+    e_msg_SLoginOut(Msg, <<>>, TrUserData).
+
+
+e_msg_SLoginOut(#'SLoginOut'{rtype = F1}, Bin,
+		TrUserData) ->
+    if F1 == undefined -> Bin;
+       true ->
+	   begin
+	     TrF1 = id(F1, TrUserData),
+	     if TrF1 =:= 0 -> Bin;
+		true -> e_varint(TrF1, <<Bin/binary, 8>>)
 	     end
 	   end
     end.
@@ -295,6 +295,14 @@ decode_msg(Bin, MsgName) when is_binary(Bin) ->
 decode_msg(Bin, MsgName, Opts) when is_binary(Bin) ->
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
+      'CRegist' ->
+	  try d_msg_CRegist(Bin, TrUserData) catch
+	    Class:Reason ->
+		StackTrace = erlang:get_stacktrace(),
+		error({gpb_error,
+		       {decoding_failure,
+			{Bin, 'CRegist', {Class, Reason, StackTrace}}}})
+	  end;
       'SWxLogin' ->
 	  try d_msg_SWxLogin(Bin, TrUserData) catch
 	    Class:Reason ->
@@ -302,14 +310,6 @@ decode_msg(Bin, MsgName, Opts) when is_binary(Bin) ->
 		error({gpb_error,
 		       {decoding_failure,
 			{Bin, 'SWxLogin', {Class, Reason, StackTrace}}}})
-	  end;
-      'CLogin' ->
-	  try d_msg_CLogin(Bin, TrUserData) catch
-	    Class:Reason ->
-		StackTrace = erlang:get_stacktrace(),
-		error({gpb_error,
-		       {decoding_failure,
-			{Bin, 'CLogin', {Class, Reason, StackTrace}}}})
 	  end;
       'SLogin' ->
 	  try d_msg_SLogin(Bin, TrUserData) catch
@@ -319,6 +319,14 @@ decode_msg(Bin, MsgName, Opts) when is_binary(Bin) ->
 		       {decoding_failure,
 			{Bin, 'SLogin', {Class, Reason, StackTrace}}}})
 	  end;
+      'CLogin' ->
+	  try d_msg_CLogin(Bin, TrUserData) catch
+	    Class:Reason ->
+		StackTrace = erlang:get_stacktrace(),
+		error({gpb_error,
+		       {decoding_failure,
+			{Bin, 'CLogin', {Class, Reason, StackTrace}}}})
+	  end;
       'SRegist' ->
 	  try d_msg_SRegist(Bin, TrUserData) catch
 	    Class:Reason ->
@@ -327,22 +335,6 @@ decode_msg(Bin, MsgName, Opts) when is_binary(Bin) ->
 		       {decoding_failure,
 			{Bin, 'SRegist', {Class, Reason, StackTrace}}}})
 	  end;
-      'SLoginOut' ->
-	  try d_msg_SLoginOut(Bin, TrUserData) catch
-	    Class:Reason ->
-		StackTrace = erlang:get_stacktrace(),
-		error({gpb_error,
-		       {decoding_failure,
-			{Bin, 'SLoginOut', {Class, Reason, StackTrace}}}})
-	  end;
-      'CRegist' ->
-	  try d_msg_CRegist(Bin, TrUserData) catch
-	    Class:Reason ->
-		StackTrace = erlang:get_stacktrace(),
-		error({gpb_error,
-		       {decoding_failure,
-			{Bin, 'CRegist', {Class, Reason, StackTrace}}}})
-	  end;
       'CWxLogin' ->
 	  try d_msg_CWxLogin(Bin, TrUserData) catch
 	    Class:Reason ->
@@ -350,596 +342,18 @@ decode_msg(Bin, MsgName, Opts) when is_binary(Bin) ->
 		error({gpb_error,
 		       {decoding_failure,
 			{Bin, 'CWxLogin', {Class, Reason, StackTrace}}}})
+	  end;
+      'SLoginOut' ->
+	  try d_msg_SLoginOut(Bin, TrUserData) catch
+	    Class:Reason ->
+		StackTrace = erlang:get_stacktrace(),
+		error({gpb_error,
+		       {decoding_failure,
+			{Bin, 'SLoginOut', {Class, Reason, StackTrace}}}})
 	  end
     end.
 
 
-
-d_msg_SWxLogin(Bin, TrUserData) ->
-    dfp_read_field_def_SWxLogin(Bin, 0, 0,
-				id(<<>>, TrUserData), id(<<>>, TrUserData),
-				id(0, TrUserData), TrUserData).
-
-dfp_read_field_def_SWxLogin(<<10, Rest/binary>>, Z1, Z2,
-			    F@_1, F@_2, F@_3, TrUserData) ->
-    d_field_SWxLogin_userid(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			    TrUserData);
-dfp_read_field_def_SWxLogin(<<18, Rest/binary>>, Z1, Z2,
-			    F@_1, F@_2, F@_3, TrUserData) ->
-    d_field_SWxLogin_token(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			   TrUserData);
-dfp_read_field_def_SWxLogin(<<24, Rest/binary>>, Z1, Z2,
-			    F@_1, F@_2, F@_3, TrUserData) ->
-    d_field_SWxLogin_error(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			   TrUserData);
-dfp_read_field_def_SWxLogin(<<>>, 0, 0, F@_1, F@_2,
-			    F@_3, _) ->
-    #'SWxLogin'{userid = F@_1, token = F@_2, error = F@_3};
-dfp_read_field_def_SWxLogin(Other, Z1, Z2, F@_1, F@_2,
-			    F@_3, TrUserData) ->
-    dg_read_field_def_SWxLogin(Other, Z1, Z2, F@_1, F@_2,
-			       F@_3, TrUserData).
-
-dg_read_field_def_SWxLogin(<<1:1, X:7, Rest/binary>>, N,
-			   Acc, F@_1, F@_2, F@_3, TrUserData)
-    when N < 32 - 7 ->
-    dg_read_field_def_SWxLogin(Rest, N + 7, X bsl N + Acc,
-			       F@_1, F@_2, F@_3, TrUserData);
-dg_read_field_def_SWxLogin(<<0:1, X:7, Rest/binary>>, N,
-			   Acc, F@_1, F@_2, F@_3, TrUserData) ->
-    Key = X bsl N + Acc,
-    case Key of
-      10 ->
-	  d_field_SWxLogin_userid(Rest, 0, 0, F@_1, F@_2, F@_3,
-				  TrUserData);
-      18 ->
-	  d_field_SWxLogin_token(Rest, 0, 0, F@_1, F@_2, F@_3,
-				 TrUserData);
-      24 ->
-	  d_field_SWxLogin_error(Rest, 0, 0, F@_1, F@_2, F@_3,
-				 TrUserData);
-      _ ->
-	  case Key band 7 of
-	    0 ->
-		skip_varint_SWxLogin(Rest, 0, 0, F@_1, F@_2, F@_3,
-				     TrUserData);
-	    1 ->
-		skip_64_SWxLogin(Rest, 0, 0, F@_1, F@_2, F@_3,
-				 TrUserData);
-	    2 ->
-		skip_length_delimited_SWxLogin(Rest, 0, 0, F@_1, F@_2,
-					       F@_3, TrUserData);
-	    3 ->
-		skip_group_SWxLogin(Rest, Key bsr 3, 0, F@_1, F@_2,
-				    F@_3, TrUserData);
-	    5 ->
-		skip_32_SWxLogin(Rest, 0, 0, F@_1, F@_2, F@_3,
-				 TrUserData)
-	  end
-    end;
-dg_read_field_def_SWxLogin(<<>>, 0, 0, F@_1, F@_2, F@_3,
-			   _) ->
-    #'SWxLogin'{userid = F@_1, token = F@_2, error = F@_3}.
-
-d_field_SWxLogin_userid(<<1:1, X:7, Rest/binary>>, N,
-			Acc, F@_1, F@_2, F@_3, TrUserData)
-    when N < 57 ->
-    d_field_SWxLogin_userid(Rest, N + 7, X bsl N + Acc,
-			    F@_1, F@_2, F@_3, TrUserData);
-d_field_SWxLogin_userid(<<0:1, X:7, Rest/binary>>, N,
-			Acc, _, F@_2, F@_3, TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {binary:copy(Bytes), Rest2}
-			 end,
-    dfp_read_field_def_SWxLogin(RestF, 0, 0, NewFValue,
-				F@_2, F@_3, TrUserData).
-
-d_field_SWxLogin_token(<<1:1, X:7, Rest/binary>>, N,
-		       Acc, F@_1, F@_2, F@_3, TrUserData)
-    when N < 57 ->
-    d_field_SWxLogin_token(Rest, N + 7, X bsl N + Acc, F@_1,
-			   F@_2, F@_3, TrUserData);
-d_field_SWxLogin_token(<<0:1, X:7, Rest/binary>>, N,
-		       Acc, F@_1, _, F@_3, TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {binary:copy(Bytes), Rest2}
-			 end,
-    dfp_read_field_def_SWxLogin(RestF, 0, 0, F@_1,
-				NewFValue, F@_3, TrUserData).
-
-d_field_SWxLogin_error(<<1:1, X:7, Rest/binary>>, N,
-		       Acc, F@_1, F@_2, F@_3, TrUserData)
-    when N < 57 ->
-    d_field_SWxLogin_error(Rest, N + 7, X bsl N + Acc, F@_1,
-			   F@_2, F@_3, TrUserData);
-d_field_SWxLogin_error(<<0:1, X:7, Rest/binary>>, N,
-		       Acc, F@_1, F@_2, _, TrUserData) ->
-    {NewFValue, RestF} = {X bsl N + Acc, Rest},
-    dfp_read_field_def_SWxLogin(RestF, 0, 0, F@_1, F@_2,
-				NewFValue, TrUserData).
-
-skip_varint_SWxLogin(<<1:1, _:7, Rest/binary>>, Z1, Z2,
-		     F@_1, F@_2, F@_3, TrUserData) ->
-    skip_varint_SWxLogin(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			 TrUserData);
-skip_varint_SWxLogin(<<0:1, _:7, Rest/binary>>, Z1, Z2,
-		     F@_1, F@_2, F@_3, TrUserData) ->
-    dfp_read_field_def_SWxLogin(Rest, Z1, Z2, F@_1, F@_2,
-				F@_3, TrUserData).
-
-skip_length_delimited_SWxLogin(<<1:1, X:7,
-				 Rest/binary>>,
-			       N, Acc, F@_1, F@_2, F@_3, TrUserData)
-    when N < 57 ->
-    skip_length_delimited_SWxLogin(Rest, N + 7,
-				   X bsl N + Acc, F@_1, F@_2, F@_3, TrUserData);
-skip_length_delimited_SWxLogin(<<0:1, X:7,
-				 Rest/binary>>,
-			       N, Acc, F@_1, F@_2, F@_3, TrUserData) ->
-    Length = X bsl N + Acc,
-    <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_SWxLogin(Rest2, 0, 0, F@_1, F@_2,
-				F@_3, TrUserData).
-
-skip_group_SWxLogin(Bin, FNum, Z2, F@_1, F@_2, F@_3,
-		    TrUserData) ->
-    {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_SWxLogin(Rest, 0, Z2, F@_1, F@_2,
-				F@_3, TrUserData).
-
-skip_32_SWxLogin(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
-		 F@_2, F@_3, TrUserData) ->
-    dfp_read_field_def_SWxLogin(Rest, Z1, Z2, F@_1, F@_2,
-				F@_3, TrUserData).
-
-skip_64_SWxLogin(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
-		 F@_2, F@_3, TrUserData) ->
-    dfp_read_field_def_SWxLogin(Rest, Z1, Z2, F@_1, F@_2,
-				F@_3, TrUserData).
-
-d_msg_CLogin(Bin, TrUserData) ->
-    dfp_read_field_def_CLogin(Bin, 0, 0,
-			      id(<<>>, TrUserData), id(<<>>, TrUserData),
-			      TrUserData).
-
-dfp_read_field_def_CLogin(<<10, Rest/binary>>, Z1, Z2,
-			  F@_1, F@_2, TrUserData) ->
-    d_field_CLogin_phone(Rest, Z1, Z2, F@_1, F@_2,
-			 TrUserData);
-dfp_read_field_def_CLogin(<<18, Rest/binary>>, Z1, Z2,
-			  F@_1, F@_2, TrUserData) ->
-    d_field_CLogin_password(Rest, Z1, Z2, F@_1, F@_2,
-			    TrUserData);
-dfp_read_field_def_CLogin(<<>>, 0, 0, F@_1, F@_2, _) ->
-    #'CLogin'{phone = F@_1, password = F@_2};
-dfp_read_field_def_CLogin(Other, Z1, Z2, F@_1, F@_2,
-			  TrUserData) ->
-    dg_read_field_def_CLogin(Other, Z1, Z2, F@_1, F@_2,
-			     TrUserData).
-
-dg_read_field_def_CLogin(<<1:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, TrUserData)
-    when N < 32 - 7 ->
-    dg_read_field_def_CLogin(Rest, N + 7, X bsl N + Acc,
-			     F@_1, F@_2, TrUserData);
-dg_read_field_def_CLogin(<<0:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, TrUserData) ->
-    Key = X bsl N + Acc,
-    case Key of
-      10 ->
-	  d_field_CLogin_phone(Rest, 0, 0, F@_1, F@_2,
-			       TrUserData);
-      18 ->
-	  d_field_CLogin_password(Rest, 0, 0, F@_1, F@_2,
-				  TrUserData);
-      _ ->
-	  case Key band 7 of
-	    0 ->
-		skip_varint_CLogin(Rest, 0, 0, F@_1, F@_2, TrUserData);
-	    1 -> skip_64_CLogin(Rest, 0, 0, F@_1, F@_2, TrUserData);
-	    2 ->
-		skip_length_delimited_CLogin(Rest, 0, 0, F@_1, F@_2,
-					     TrUserData);
-	    3 ->
-		skip_group_CLogin(Rest, Key bsr 3, 0, F@_1, F@_2,
-				  TrUserData);
-	    5 -> skip_32_CLogin(Rest, 0, 0, F@_1, F@_2, TrUserData)
-	  end
-    end;
-dg_read_field_def_CLogin(<<>>, 0, 0, F@_1, F@_2, _) ->
-    #'CLogin'{phone = F@_1, password = F@_2}.
-
-d_field_CLogin_phone(<<1:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, TrUserData)
-    when N < 57 ->
-    d_field_CLogin_phone(Rest, N + 7, X bsl N + Acc, F@_1,
-			 F@_2, TrUserData);
-d_field_CLogin_phone(<<0:1, X:7, Rest/binary>>, N, Acc,
-		     _, F@_2, TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {binary:copy(Bytes), Rest2}
-			 end,
-    dfp_read_field_def_CLogin(RestF, 0, 0, NewFValue, F@_2,
-			      TrUserData).
-
-d_field_CLogin_password(<<1:1, X:7, Rest/binary>>, N,
-			Acc, F@_1, F@_2, TrUserData)
-    when N < 57 ->
-    d_field_CLogin_password(Rest, N + 7, X bsl N + Acc,
-			    F@_1, F@_2, TrUserData);
-d_field_CLogin_password(<<0:1, X:7, Rest/binary>>, N,
-			Acc, F@_1, _, TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {binary:copy(Bytes), Rest2}
-			 end,
-    dfp_read_field_def_CLogin(RestF, 0, 0, F@_1, NewFValue,
-			      TrUserData).
-
-skip_varint_CLogin(<<1:1, _:7, Rest/binary>>, Z1, Z2,
-		   F@_1, F@_2, TrUserData) ->
-    skip_varint_CLogin(Rest, Z1, Z2, F@_1, F@_2,
-		       TrUserData);
-skip_varint_CLogin(<<0:1, _:7, Rest/binary>>, Z1, Z2,
-		   F@_1, F@_2, TrUserData) ->
-    dfp_read_field_def_CLogin(Rest, Z1, Z2, F@_1, F@_2,
-			      TrUserData).
-
-skip_length_delimited_CLogin(<<1:1, X:7, Rest/binary>>,
-			     N, Acc, F@_1, F@_2, TrUserData)
-    when N < 57 ->
-    skip_length_delimited_CLogin(Rest, N + 7, X bsl N + Acc,
-				 F@_1, F@_2, TrUserData);
-skip_length_delimited_CLogin(<<0:1, X:7, Rest/binary>>,
-			     N, Acc, F@_1, F@_2, TrUserData) ->
-    Length = X bsl N + Acc,
-    <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_CLogin(Rest2, 0, 0, F@_1, F@_2,
-			      TrUserData).
-
-skip_group_CLogin(Bin, FNum, Z2, F@_1, F@_2,
-		  TrUserData) ->
-    {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_CLogin(Rest, 0, Z2, F@_1, F@_2,
-			      TrUserData).
-
-skip_32_CLogin(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
-	       F@_2, TrUserData) ->
-    dfp_read_field_def_CLogin(Rest, Z1, Z2, F@_1, F@_2,
-			      TrUserData).
-
-skip_64_CLogin(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
-	       F@_2, TrUserData) ->
-    dfp_read_field_def_CLogin(Rest, Z1, Z2, F@_1, F@_2,
-			      TrUserData).
-
-d_msg_SLogin(Bin, TrUserData) ->
-    dfp_read_field_def_SLogin(Bin, 0, 0,
-			      id(<<>>, TrUserData), id(0, TrUserData),
-			      TrUserData).
-
-dfp_read_field_def_SLogin(<<10, Rest/binary>>, Z1, Z2,
-			  F@_1, F@_2, TrUserData) ->
-    d_field_SLogin_userid(Rest, Z1, Z2, F@_1, F@_2,
-			  TrUserData);
-dfp_read_field_def_SLogin(<<16, Rest/binary>>, Z1, Z2,
-			  F@_1, F@_2, TrUserData) ->
-    d_field_SLogin_error(Rest, Z1, Z2, F@_1, F@_2,
-			 TrUserData);
-dfp_read_field_def_SLogin(<<>>, 0, 0, F@_1, F@_2, _) ->
-    #'SLogin'{userid = F@_1, error = F@_2};
-dfp_read_field_def_SLogin(Other, Z1, Z2, F@_1, F@_2,
-			  TrUserData) ->
-    dg_read_field_def_SLogin(Other, Z1, Z2, F@_1, F@_2,
-			     TrUserData).
-
-dg_read_field_def_SLogin(<<1:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, TrUserData)
-    when N < 32 - 7 ->
-    dg_read_field_def_SLogin(Rest, N + 7, X bsl N + Acc,
-			     F@_1, F@_2, TrUserData);
-dg_read_field_def_SLogin(<<0:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, TrUserData) ->
-    Key = X bsl N + Acc,
-    case Key of
-      10 ->
-	  d_field_SLogin_userid(Rest, 0, 0, F@_1, F@_2,
-				TrUserData);
-      16 ->
-	  d_field_SLogin_error(Rest, 0, 0, F@_1, F@_2,
-			       TrUserData);
-      _ ->
-	  case Key band 7 of
-	    0 ->
-		skip_varint_SLogin(Rest, 0, 0, F@_1, F@_2, TrUserData);
-	    1 -> skip_64_SLogin(Rest, 0, 0, F@_1, F@_2, TrUserData);
-	    2 ->
-		skip_length_delimited_SLogin(Rest, 0, 0, F@_1, F@_2,
-					     TrUserData);
-	    3 ->
-		skip_group_SLogin(Rest, Key bsr 3, 0, F@_1, F@_2,
-				  TrUserData);
-	    5 -> skip_32_SLogin(Rest, 0, 0, F@_1, F@_2, TrUserData)
-	  end
-    end;
-dg_read_field_def_SLogin(<<>>, 0, 0, F@_1, F@_2, _) ->
-    #'SLogin'{userid = F@_1, error = F@_2}.
-
-d_field_SLogin_userid(<<1:1, X:7, Rest/binary>>, N, Acc,
-		      F@_1, F@_2, TrUserData)
-    when N < 57 ->
-    d_field_SLogin_userid(Rest, N + 7, X bsl N + Acc, F@_1,
-			  F@_2, TrUserData);
-d_field_SLogin_userid(<<0:1, X:7, Rest/binary>>, N, Acc,
-		      _, F@_2, TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {binary:copy(Bytes), Rest2}
-			 end,
-    dfp_read_field_def_SLogin(RestF, 0, 0, NewFValue, F@_2,
-			      TrUserData).
-
-d_field_SLogin_error(<<1:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, TrUserData)
-    when N < 57 ->
-    d_field_SLogin_error(Rest, N + 7, X bsl N + Acc, F@_1,
-			 F@_2, TrUserData);
-d_field_SLogin_error(<<0:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, _, TrUserData) ->
-    {NewFValue, RestF} = {X bsl N + Acc, Rest},
-    dfp_read_field_def_SLogin(RestF, 0, 0, F@_1, NewFValue,
-			      TrUserData).
-
-skip_varint_SLogin(<<1:1, _:7, Rest/binary>>, Z1, Z2,
-		   F@_1, F@_2, TrUserData) ->
-    skip_varint_SLogin(Rest, Z1, Z2, F@_1, F@_2,
-		       TrUserData);
-skip_varint_SLogin(<<0:1, _:7, Rest/binary>>, Z1, Z2,
-		   F@_1, F@_2, TrUserData) ->
-    dfp_read_field_def_SLogin(Rest, Z1, Z2, F@_1, F@_2,
-			      TrUserData).
-
-skip_length_delimited_SLogin(<<1:1, X:7, Rest/binary>>,
-			     N, Acc, F@_1, F@_2, TrUserData)
-    when N < 57 ->
-    skip_length_delimited_SLogin(Rest, N + 7, X bsl N + Acc,
-				 F@_1, F@_2, TrUserData);
-skip_length_delimited_SLogin(<<0:1, X:7, Rest/binary>>,
-			     N, Acc, F@_1, F@_2, TrUserData) ->
-    Length = X bsl N + Acc,
-    <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_SLogin(Rest2, 0, 0, F@_1, F@_2,
-			      TrUserData).
-
-skip_group_SLogin(Bin, FNum, Z2, F@_1, F@_2,
-		  TrUserData) ->
-    {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_SLogin(Rest, 0, Z2, F@_1, F@_2,
-			      TrUserData).
-
-skip_32_SLogin(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
-	       F@_2, TrUserData) ->
-    dfp_read_field_def_SLogin(Rest, Z1, Z2, F@_1, F@_2,
-			      TrUserData).
-
-skip_64_SLogin(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
-	       F@_2, TrUserData) ->
-    dfp_read_field_def_SLogin(Rest, Z1, Z2, F@_1, F@_2,
-			      TrUserData).
-
-d_msg_SRegist(Bin, TrUserData) ->
-    dfp_read_field_def_SRegist(Bin, 0, 0,
-			       id(<<>>, TrUserData), id(0, TrUserData),
-			       TrUserData).
-
-dfp_read_field_def_SRegist(<<10, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, TrUserData) ->
-    d_field_SRegist_userid(Rest, Z1, Z2, F@_1, F@_2,
-			   TrUserData);
-dfp_read_field_def_SRegist(<<16, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, TrUserData) ->
-    d_field_SRegist_error(Rest, Z1, Z2, F@_1, F@_2,
-			  TrUserData);
-dfp_read_field_def_SRegist(<<>>, 0, 0, F@_1, F@_2, _) ->
-    #'SRegist'{userid = F@_1, error = F@_2};
-dfp_read_field_def_SRegist(Other, Z1, Z2, F@_1, F@_2,
-			   TrUserData) ->
-    dg_read_field_def_SRegist(Other, Z1, Z2, F@_1, F@_2,
-			      TrUserData).
-
-dg_read_field_def_SRegist(<<1:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, TrUserData)
-    when N < 32 - 7 ->
-    dg_read_field_def_SRegist(Rest, N + 7, X bsl N + Acc,
-			      F@_1, F@_2, TrUserData);
-dg_read_field_def_SRegist(<<0:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, TrUserData) ->
-    Key = X bsl N + Acc,
-    case Key of
-      10 ->
-	  d_field_SRegist_userid(Rest, 0, 0, F@_1, F@_2,
-				 TrUserData);
-      16 ->
-	  d_field_SRegist_error(Rest, 0, 0, F@_1, F@_2,
-				TrUserData);
-      _ ->
-	  case Key band 7 of
-	    0 ->
-		skip_varint_SRegist(Rest, 0, 0, F@_1, F@_2, TrUserData);
-	    1 ->
-		skip_64_SRegist(Rest, 0, 0, F@_1, F@_2, TrUserData);
-	    2 ->
-		skip_length_delimited_SRegist(Rest, 0, 0, F@_1, F@_2,
-					      TrUserData);
-	    3 ->
-		skip_group_SRegist(Rest, Key bsr 3, 0, F@_1, F@_2,
-				   TrUserData);
-	    5 -> skip_32_SRegist(Rest, 0, 0, F@_1, F@_2, TrUserData)
-	  end
-    end;
-dg_read_field_def_SRegist(<<>>, 0, 0, F@_1, F@_2, _) ->
-    #'SRegist'{userid = F@_1, error = F@_2}.
-
-d_field_SRegist_userid(<<1:1, X:7, Rest/binary>>, N,
-		       Acc, F@_1, F@_2, TrUserData)
-    when N < 57 ->
-    d_field_SRegist_userid(Rest, N + 7, X bsl N + Acc, F@_1,
-			   F@_2, TrUserData);
-d_field_SRegist_userid(<<0:1, X:7, Rest/binary>>, N,
-		       Acc, _, F@_2, TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {binary:copy(Bytes), Rest2}
-			 end,
-    dfp_read_field_def_SRegist(RestF, 0, 0, NewFValue, F@_2,
-			       TrUserData).
-
-d_field_SRegist_error(<<1:1, X:7, Rest/binary>>, N, Acc,
-		      F@_1, F@_2, TrUserData)
-    when N < 57 ->
-    d_field_SRegist_error(Rest, N + 7, X bsl N + Acc, F@_1,
-			  F@_2, TrUserData);
-d_field_SRegist_error(<<0:1, X:7, Rest/binary>>, N, Acc,
-		      F@_1, _, TrUserData) ->
-    {NewFValue, RestF} = {X bsl N + Acc, Rest},
-    dfp_read_field_def_SRegist(RestF, 0, 0, F@_1, NewFValue,
-			       TrUserData).
-
-skip_varint_SRegist(<<1:1, _:7, Rest/binary>>, Z1, Z2,
-		    F@_1, F@_2, TrUserData) ->
-    skip_varint_SRegist(Rest, Z1, Z2, F@_1, F@_2,
-			TrUserData);
-skip_varint_SRegist(<<0:1, _:7, Rest/binary>>, Z1, Z2,
-		    F@_1, F@_2, TrUserData) ->
-    dfp_read_field_def_SRegist(Rest, Z1, Z2, F@_1, F@_2,
-			       TrUserData).
-
-skip_length_delimited_SRegist(<<1:1, X:7, Rest/binary>>,
-			      N, Acc, F@_1, F@_2, TrUserData)
-    when N < 57 ->
-    skip_length_delimited_SRegist(Rest, N + 7,
-				  X bsl N + Acc, F@_1, F@_2, TrUserData);
-skip_length_delimited_SRegist(<<0:1, X:7, Rest/binary>>,
-			      N, Acc, F@_1, F@_2, TrUserData) ->
-    Length = X bsl N + Acc,
-    <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_SRegist(Rest2, 0, 0, F@_1, F@_2,
-			       TrUserData).
-
-skip_group_SRegist(Bin, FNum, Z2, F@_1, F@_2,
-		   TrUserData) ->
-    {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_SRegist(Rest, 0, Z2, F@_1, F@_2,
-			       TrUserData).
-
-skip_32_SRegist(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
-		F@_2, TrUserData) ->
-    dfp_read_field_def_SRegist(Rest, Z1, Z2, F@_1, F@_2,
-			       TrUserData).
-
-skip_64_SRegist(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
-		F@_2, TrUserData) ->
-    dfp_read_field_def_SRegist(Rest, Z1, Z2, F@_1, F@_2,
-			       TrUserData).
-
-d_msg_SLoginOut(Bin, TrUserData) ->
-    dfp_read_field_def_SLoginOut(Bin, 0, 0,
-				 id(0, TrUserData), TrUserData).
-
-dfp_read_field_def_SLoginOut(<<8, Rest/binary>>, Z1, Z2,
-			     F@_1, TrUserData) ->
-    d_field_SLoginOut_rtype(Rest, Z1, Z2, F@_1, TrUserData);
-dfp_read_field_def_SLoginOut(<<>>, 0, 0, F@_1, _) ->
-    #'SLoginOut'{rtype = F@_1};
-dfp_read_field_def_SLoginOut(Other, Z1, Z2, F@_1,
-			     TrUserData) ->
-    dg_read_field_def_SLoginOut(Other, Z1, Z2, F@_1,
-				TrUserData).
-
-dg_read_field_def_SLoginOut(<<1:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, TrUserData)
-    when N < 32 - 7 ->
-    dg_read_field_def_SLoginOut(Rest, N + 7, X bsl N + Acc,
-				F@_1, TrUserData);
-dg_read_field_def_SLoginOut(<<0:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, TrUserData) ->
-    Key = X bsl N + Acc,
-    case Key of
-      8 ->
-	  d_field_SLoginOut_rtype(Rest, 0, 0, F@_1, TrUserData);
-      _ ->
-	  case Key band 7 of
-	    0 ->
-		skip_varint_SLoginOut(Rest, 0, 0, F@_1, TrUserData);
-	    1 -> skip_64_SLoginOut(Rest, 0, 0, F@_1, TrUserData);
-	    2 ->
-		skip_length_delimited_SLoginOut(Rest, 0, 0, F@_1,
-						TrUserData);
-	    3 ->
-		skip_group_SLoginOut(Rest, Key bsr 3, 0, F@_1,
-				     TrUserData);
-	    5 -> skip_32_SLoginOut(Rest, 0, 0, F@_1, TrUserData)
-	  end
-    end;
-dg_read_field_def_SLoginOut(<<>>, 0, 0, F@_1, _) ->
-    #'SLoginOut'{rtype = F@_1}.
-
-d_field_SLoginOut_rtype(<<1:1, X:7, Rest/binary>>, N,
-			Acc, F@_1, TrUserData)
-    when N < 57 ->
-    d_field_SLoginOut_rtype(Rest, N + 7, X bsl N + Acc,
-			    F@_1, TrUserData);
-d_field_SLoginOut_rtype(<<0:1, X:7, Rest/binary>>, N,
-			Acc, _, TrUserData) ->
-    {NewFValue, RestF} = {X bsl N + Acc, Rest},
-    dfp_read_field_def_SLoginOut(RestF, 0, 0, NewFValue,
-				 TrUserData).
-
-skip_varint_SLoginOut(<<1:1, _:7, Rest/binary>>, Z1, Z2,
-		      F@_1, TrUserData) ->
-    skip_varint_SLoginOut(Rest, Z1, Z2, F@_1, TrUserData);
-skip_varint_SLoginOut(<<0:1, _:7, Rest/binary>>, Z1, Z2,
-		      F@_1, TrUserData) ->
-    dfp_read_field_def_SLoginOut(Rest, Z1, Z2, F@_1,
-				 TrUserData).
-
-skip_length_delimited_SLoginOut(<<1:1, X:7,
-				  Rest/binary>>,
-				N, Acc, F@_1, TrUserData)
-    when N < 57 ->
-    skip_length_delimited_SLoginOut(Rest, N + 7,
-				    X bsl N + Acc, F@_1, TrUserData);
-skip_length_delimited_SLoginOut(<<0:1, X:7,
-				  Rest/binary>>,
-				N, Acc, F@_1, TrUserData) ->
-    Length = X bsl N + Acc,
-    <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_SLoginOut(Rest2, 0, 0, F@_1,
-				 TrUserData).
-
-skip_group_SLoginOut(Bin, FNum, Z2, F@_1, TrUserData) ->
-    {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_SLoginOut(Rest, 0, Z2, F@_1,
-				 TrUserData).
-
-skip_32_SLoginOut(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
-		  TrUserData) ->
-    dfp_read_field_def_SLoginOut(Rest, Z1, Z2, F@_1,
-				 TrUserData).
-
-skip_64_SLoginOut(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
-		  TrUserData) ->
-    dfp_read_field_def_SLoginOut(Rest, Z1, Z2, F@_1,
-				 TrUserData).
 
 d_msg_CRegist(Bin, TrUserData) ->
     dfp_read_field_def_CRegist(Bin, 0, 0,
@@ -1091,6 +505,502 @@ skip_64_CRegist(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
     dfp_read_field_def_CRegist(Rest, Z1, Z2, F@_1, F@_2,
 			       F@_3, TrUserData).
 
+d_msg_SWxLogin(Bin, TrUserData) ->
+    dfp_read_field_def_SWxLogin(Bin, 0, 0,
+				id(<<>>, TrUserData), id(<<>>, TrUserData),
+				id(0, TrUserData), TrUserData).
+
+dfp_read_field_def_SWxLogin(<<10, Rest/binary>>, Z1, Z2,
+			    F@_1, F@_2, F@_3, TrUserData) ->
+    d_field_SWxLogin_userid(Rest, Z1, Z2, F@_1, F@_2, F@_3,
+			    TrUserData);
+dfp_read_field_def_SWxLogin(<<18, Rest/binary>>, Z1, Z2,
+			    F@_1, F@_2, F@_3, TrUserData) ->
+    d_field_SWxLogin_token(Rest, Z1, Z2, F@_1, F@_2, F@_3,
+			   TrUserData);
+dfp_read_field_def_SWxLogin(<<24, Rest/binary>>, Z1, Z2,
+			    F@_1, F@_2, F@_3, TrUserData) ->
+    d_field_SWxLogin_error(Rest, Z1, Z2, F@_1, F@_2, F@_3,
+			   TrUserData);
+dfp_read_field_def_SWxLogin(<<>>, 0, 0, F@_1, F@_2,
+			    F@_3, _) ->
+    #'SWxLogin'{userid = F@_1, token = F@_2, error = F@_3};
+dfp_read_field_def_SWxLogin(Other, Z1, Z2, F@_1, F@_2,
+			    F@_3, TrUserData) ->
+    dg_read_field_def_SWxLogin(Other, Z1, Z2, F@_1, F@_2,
+			       F@_3, TrUserData).
+
+dg_read_field_def_SWxLogin(<<1:1, X:7, Rest/binary>>, N,
+			   Acc, F@_1, F@_2, F@_3, TrUserData)
+    when N < 32 - 7 ->
+    dg_read_field_def_SWxLogin(Rest, N + 7, X bsl N + Acc,
+			       F@_1, F@_2, F@_3, TrUserData);
+dg_read_field_def_SWxLogin(<<0:1, X:7, Rest/binary>>, N,
+			   Acc, F@_1, F@_2, F@_3, TrUserData) ->
+    Key = X bsl N + Acc,
+    case Key of
+      10 ->
+	  d_field_SWxLogin_userid(Rest, 0, 0, F@_1, F@_2, F@_3,
+				  TrUserData);
+      18 ->
+	  d_field_SWxLogin_token(Rest, 0, 0, F@_1, F@_2, F@_3,
+				 TrUserData);
+      24 ->
+	  d_field_SWxLogin_error(Rest, 0, 0, F@_1, F@_2, F@_3,
+				 TrUserData);
+      _ ->
+	  case Key band 7 of
+	    0 ->
+		skip_varint_SWxLogin(Rest, 0, 0, F@_1, F@_2, F@_3,
+				     TrUserData);
+	    1 ->
+		skip_64_SWxLogin(Rest, 0, 0, F@_1, F@_2, F@_3,
+				 TrUserData);
+	    2 ->
+		skip_length_delimited_SWxLogin(Rest, 0, 0, F@_1, F@_2,
+					       F@_3, TrUserData);
+	    3 ->
+		skip_group_SWxLogin(Rest, Key bsr 3, 0, F@_1, F@_2,
+				    F@_3, TrUserData);
+	    5 ->
+		skip_32_SWxLogin(Rest, 0, 0, F@_1, F@_2, F@_3,
+				 TrUserData)
+	  end
+    end;
+dg_read_field_def_SWxLogin(<<>>, 0, 0, F@_1, F@_2, F@_3,
+			   _) ->
+    #'SWxLogin'{userid = F@_1, token = F@_2, error = F@_3}.
+
+d_field_SWxLogin_userid(<<1:1, X:7, Rest/binary>>, N,
+			Acc, F@_1, F@_2, F@_3, TrUserData)
+    when N < 57 ->
+    d_field_SWxLogin_userid(Rest, N + 7, X bsl N + Acc,
+			    F@_1, F@_2, F@_3, TrUserData);
+d_field_SWxLogin_userid(<<0:1, X:7, Rest/binary>>, N,
+			Acc, _, F@_2, F@_3, TrUserData) ->
+    {NewFValue, RestF} = begin
+			   Len = X bsl N + Acc,
+			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
+			   {binary:copy(Bytes), Rest2}
+			 end,
+    dfp_read_field_def_SWxLogin(RestF, 0, 0, NewFValue,
+				F@_2, F@_3, TrUserData).
+
+d_field_SWxLogin_token(<<1:1, X:7, Rest/binary>>, N,
+		       Acc, F@_1, F@_2, F@_3, TrUserData)
+    when N < 57 ->
+    d_field_SWxLogin_token(Rest, N + 7, X bsl N + Acc, F@_1,
+			   F@_2, F@_3, TrUserData);
+d_field_SWxLogin_token(<<0:1, X:7, Rest/binary>>, N,
+		       Acc, F@_1, _, F@_3, TrUserData) ->
+    {NewFValue, RestF} = begin
+			   Len = X bsl N + Acc,
+			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
+			   {binary:copy(Bytes), Rest2}
+			 end,
+    dfp_read_field_def_SWxLogin(RestF, 0, 0, F@_1,
+				NewFValue, F@_3, TrUserData).
+
+d_field_SWxLogin_error(<<1:1, X:7, Rest/binary>>, N,
+		       Acc, F@_1, F@_2, F@_3, TrUserData)
+    when N < 57 ->
+    d_field_SWxLogin_error(Rest, N + 7, X bsl N + Acc, F@_1,
+			   F@_2, F@_3, TrUserData);
+d_field_SWxLogin_error(<<0:1, X:7, Rest/binary>>, N,
+		       Acc, F@_1, F@_2, _, TrUserData) ->
+    {NewFValue, RestF} = {X bsl N + Acc, Rest},
+    dfp_read_field_def_SWxLogin(RestF, 0, 0, F@_1, F@_2,
+				NewFValue, TrUserData).
+
+skip_varint_SWxLogin(<<1:1, _:7, Rest/binary>>, Z1, Z2,
+		     F@_1, F@_2, F@_3, TrUserData) ->
+    skip_varint_SWxLogin(Rest, Z1, Z2, F@_1, F@_2, F@_3,
+			 TrUserData);
+skip_varint_SWxLogin(<<0:1, _:7, Rest/binary>>, Z1, Z2,
+		     F@_1, F@_2, F@_3, TrUserData) ->
+    dfp_read_field_def_SWxLogin(Rest, Z1, Z2, F@_1, F@_2,
+				F@_3, TrUserData).
+
+skip_length_delimited_SWxLogin(<<1:1, X:7,
+				 Rest/binary>>,
+			       N, Acc, F@_1, F@_2, F@_3, TrUserData)
+    when N < 57 ->
+    skip_length_delimited_SWxLogin(Rest, N + 7,
+				   X bsl N + Acc, F@_1, F@_2, F@_3, TrUserData);
+skip_length_delimited_SWxLogin(<<0:1, X:7,
+				 Rest/binary>>,
+			       N, Acc, F@_1, F@_2, F@_3, TrUserData) ->
+    Length = X bsl N + Acc,
+    <<_:Length/binary, Rest2/binary>> = Rest,
+    dfp_read_field_def_SWxLogin(Rest2, 0, 0, F@_1, F@_2,
+				F@_3, TrUserData).
+
+skip_group_SWxLogin(Bin, FNum, Z2, F@_1, F@_2, F@_3,
+		    TrUserData) ->
+    {_, Rest} = read_group(Bin, FNum),
+    dfp_read_field_def_SWxLogin(Rest, 0, Z2, F@_1, F@_2,
+				F@_3, TrUserData).
+
+skip_32_SWxLogin(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
+		 F@_2, F@_3, TrUserData) ->
+    dfp_read_field_def_SWxLogin(Rest, Z1, Z2, F@_1, F@_2,
+				F@_3, TrUserData).
+
+skip_64_SWxLogin(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
+		 F@_2, F@_3, TrUserData) ->
+    dfp_read_field_def_SWxLogin(Rest, Z1, Z2, F@_1, F@_2,
+				F@_3, TrUserData).
+
+d_msg_SLogin(Bin, TrUserData) ->
+    dfp_read_field_def_SLogin(Bin, 0, 0,
+			      id(<<>>, TrUserData), id(0, TrUserData),
+			      TrUserData).
+
+dfp_read_field_def_SLogin(<<10, Rest/binary>>, Z1, Z2,
+			  F@_1, F@_2, TrUserData) ->
+    d_field_SLogin_userid(Rest, Z1, Z2, F@_1, F@_2,
+			  TrUserData);
+dfp_read_field_def_SLogin(<<16, Rest/binary>>, Z1, Z2,
+			  F@_1, F@_2, TrUserData) ->
+    d_field_SLogin_error(Rest, Z1, Z2, F@_1, F@_2,
+			 TrUserData);
+dfp_read_field_def_SLogin(<<>>, 0, 0, F@_1, F@_2, _) ->
+    #'SLogin'{userid = F@_1, error = F@_2};
+dfp_read_field_def_SLogin(Other, Z1, Z2, F@_1, F@_2,
+			  TrUserData) ->
+    dg_read_field_def_SLogin(Other, Z1, Z2, F@_1, F@_2,
+			     TrUserData).
+
+dg_read_field_def_SLogin(<<1:1, X:7, Rest/binary>>, N,
+			 Acc, F@_1, F@_2, TrUserData)
+    when N < 32 - 7 ->
+    dg_read_field_def_SLogin(Rest, N + 7, X bsl N + Acc,
+			     F@_1, F@_2, TrUserData);
+dg_read_field_def_SLogin(<<0:1, X:7, Rest/binary>>, N,
+			 Acc, F@_1, F@_2, TrUserData) ->
+    Key = X bsl N + Acc,
+    case Key of
+      10 ->
+	  d_field_SLogin_userid(Rest, 0, 0, F@_1, F@_2,
+				TrUserData);
+      16 ->
+	  d_field_SLogin_error(Rest, 0, 0, F@_1, F@_2,
+			       TrUserData);
+      _ ->
+	  case Key band 7 of
+	    0 ->
+		skip_varint_SLogin(Rest, 0, 0, F@_1, F@_2, TrUserData);
+	    1 -> skip_64_SLogin(Rest, 0, 0, F@_1, F@_2, TrUserData);
+	    2 ->
+		skip_length_delimited_SLogin(Rest, 0, 0, F@_1, F@_2,
+					     TrUserData);
+	    3 ->
+		skip_group_SLogin(Rest, Key bsr 3, 0, F@_1, F@_2,
+				  TrUserData);
+	    5 -> skip_32_SLogin(Rest, 0, 0, F@_1, F@_2, TrUserData)
+	  end
+    end;
+dg_read_field_def_SLogin(<<>>, 0, 0, F@_1, F@_2, _) ->
+    #'SLogin'{userid = F@_1, error = F@_2}.
+
+d_field_SLogin_userid(<<1:1, X:7, Rest/binary>>, N, Acc,
+		      F@_1, F@_2, TrUserData)
+    when N < 57 ->
+    d_field_SLogin_userid(Rest, N + 7, X bsl N + Acc, F@_1,
+			  F@_2, TrUserData);
+d_field_SLogin_userid(<<0:1, X:7, Rest/binary>>, N, Acc,
+		      _, F@_2, TrUserData) ->
+    {NewFValue, RestF} = begin
+			   Len = X bsl N + Acc,
+			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
+			   {binary:copy(Bytes), Rest2}
+			 end,
+    dfp_read_field_def_SLogin(RestF, 0, 0, NewFValue, F@_2,
+			      TrUserData).
+
+d_field_SLogin_error(<<1:1, X:7, Rest/binary>>, N, Acc,
+		     F@_1, F@_2, TrUserData)
+    when N < 57 ->
+    d_field_SLogin_error(Rest, N + 7, X bsl N + Acc, F@_1,
+			 F@_2, TrUserData);
+d_field_SLogin_error(<<0:1, X:7, Rest/binary>>, N, Acc,
+		     F@_1, _, TrUserData) ->
+    {NewFValue, RestF} = {X bsl N + Acc, Rest},
+    dfp_read_field_def_SLogin(RestF, 0, 0, F@_1, NewFValue,
+			      TrUserData).
+
+skip_varint_SLogin(<<1:1, _:7, Rest/binary>>, Z1, Z2,
+		   F@_1, F@_2, TrUserData) ->
+    skip_varint_SLogin(Rest, Z1, Z2, F@_1, F@_2,
+		       TrUserData);
+skip_varint_SLogin(<<0:1, _:7, Rest/binary>>, Z1, Z2,
+		   F@_1, F@_2, TrUserData) ->
+    dfp_read_field_def_SLogin(Rest, Z1, Z2, F@_1, F@_2,
+			      TrUserData).
+
+skip_length_delimited_SLogin(<<1:1, X:7, Rest/binary>>,
+			     N, Acc, F@_1, F@_2, TrUserData)
+    when N < 57 ->
+    skip_length_delimited_SLogin(Rest, N + 7, X bsl N + Acc,
+				 F@_1, F@_2, TrUserData);
+skip_length_delimited_SLogin(<<0:1, X:7, Rest/binary>>,
+			     N, Acc, F@_1, F@_2, TrUserData) ->
+    Length = X bsl N + Acc,
+    <<_:Length/binary, Rest2/binary>> = Rest,
+    dfp_read_field_def_SLogin(Rest2, 0, 0, F@_1, F@_2,
+			      TrUserData).
+
+skip_group_SLogin(Bin, FNum, Z2, F@_1, F@_2,
+		  TrUserData) ->
+    {_, Rest} = read_group(Bin, FNum),
+    dfp_read_field_def_SLogin(Rest, 0, Z2, F@_1, F@_2,
+			      TrUserData).
+
+skip_32_SLogin(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
+	       F@_2, TrUserData) ->
+    dfp_read_field_def_SLogin(Rest, Z1, Z2, F@_1, F@_2,
+			      TrUserData).
+
+skip_64_SLogin(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
+	       F@_2, TrUserData) ->
+    dfp_read_field_def_SLogin(Rest, Z1, Z2, F@_1, F@_2,
+			      TrUserData).
+
+d_msg_CLogin(Bin, TrUserData) ->
+    dfp_read_field_def_CLogin(Bin, 0, 0,
+			      id(<<>>, TrUserData), id(<<>>, TrUserData),
+			      TrUserData).
+
+dfp_read_field_def_CLogin(<<10, Rest/binary>>, Z1, Z2,
+			  F@_1, F@_2, TrUserData) ->
+    d_field_CLogin_phone(Rest, Z1, Z2, F@_1, F@_2,
+			 TrUserData);
+dfp_read_field_def_CLogin(<<18, Rest/binary>>, Z1, Z2,
+			  F@_1, F@_2, TrUserData) ->
+    d_field_CLogin_password(Rest, Z1, Z2, F@_1, F@_2,
+			    TrUserData);
+dfp_read_field_def_CLogin(<<>>, 0, 0, F@_1, F@_2, _) ->
+    #'CLogin'{phone = F@_1, password = F@_2};
+dfp_read_field_def_CLogin(Other, Z1, Z2, F@_1, F@_2,
+			  TrUserData) ->
+    dg_read_field_def_CLogin(Other, Z1, Z2, F@_1, F@_2,
+			     TrUserData).
+
+dg_read_field_def_CLogin(<<1:1, X:7, Rest/binary>>, N,
+			 Acc, F@_1, F@_2, TrUserData)
+    when N < 32 - 7 ->
+    dg_read_field_def_CLogin(Rest, N + 7, X bsl N + Acc,
+			     F@_1, F@_2, TrUserData);
+dg_read_field_def_CLogin(<<0:1, X:7, Rest/binary>>, N,
+			 Acc, F@_1, F@_2, TrUserData) ->
+    Key = X bsl N + Acc,
+    case Key of
+      10 ->
+	  d_field_CLogin_phone(Rest, 0, 0, F@_1, F@_2,
+			       TrUserData);
+      18 ->
+	  d_field_CLogin_password(Rest, 0, 0, F@_1, F@_2,
+				  TrUserData);
+      _ ->
+	  case Key band 7 of
+	    0 ->
+		skip_varint_CLogin(Rest, 0, 0, F@_1, F@_2, TrUserData);
+	    1 -> skip_64_CLogin(Rest, 0, 0, F@_1, F@_2, TrUserData);
+	    2 ->
+		skip_length_delimited_CLogin(Rest, 0, 0, F@_1, F@_2,
+					     TrUserData);
+	    3 ->
+		skip_group_CLogin(Rest, Key bsr 3, 0, F@_1, F@_2,
+				  TrUserData);
+	    5 -> skip_32_CLogin(Rest, 0, 0, F@_1, F@_2, TrUserData)
+	  end
+    end;
+dg_read_field_def_CLogin(<<>>, 0, 0, F@_1, F@_2, _) ->
+    #'CLogin'{phone = F@_1, password = F@_2}.
+
+d_field_CLogin_phone(<<1:1, X:7, Rest/binary>>, N, Acc,
+		     F@_1, F@_2, TrUserData)
+    when N < 57 ->
+    d_field_CLogin_phone(Rest, N + 7, X bsl N + Acc, F@_1,
+			 F@_2, TrUserData);
+d_field_CLogin_phone(<<0:1, X:7, Rest/binary>>, N, Acc,
+		     _, F@_2, TrUserData) ->
+    {NewFValue, RestF} = begin
+			   Len = X bsl N + Acc,
+			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
+			   {binary:copy(Bytes), Rest2}
+			 end,
+    dfp_read_field_def_CLogin(RestF, 0, 0, NewFValue, F@_2,
+			      TrUserData).
+
+d_field_CLogin_password(<<1:1, X:7, Rest/binary>>, N,
+			Acc, F@_1, F@_2, TrUserData)
+    when N < 57 ->
+    d_field_CLogin_password(Rest, N + 7, X bsl N + Acc,
+			    F@_1, F@_2, TrUserData);
+d_field_CLogin_password(<<0:1, X:7, Rest/binary>>, N,
+			Acc, F@_1, _, TrUserData) ->
+    {NewFValue, RestF} = begin
+			   Len = X bsl N + Acc,
+			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
+			   {binary:copy(Bytes), Rest2}
+			 end,
+    dfp_read_field_def_CLogin(RestF, 0, 0, F@_1, NewFValue,
+			      TrUserData).
+
+skip_varint_CLogin(<<1:1, _:7, Rest/binary>>, Z1, Z2,
+		   F@_1, F@_2, TrUserData) ->
+    skip_varint_CLogin(Rest, Z1, Z2, F@_1, F@_2,
+		       TrUserData);
+skip_varint_CLogin(<<0:1, _:7, Rest/binary>>, Z1, Z2,
+		   F@_1, F@_2, TrUserData) ->
+    dfp_read_field_def_CLogin(Rest, Z1, Z2, F@_1, F@_2,
+			      TrUserData).
+
+skip_length_delimited_CLogin(<<1:1, X:7, Rest/binary>>,
+			     N, Acc, F@_1, F@_2, TrUserData)
+    when N < 57 ->
+    skip_length_delimited_CLogin(Rest, N + 7, X bsl N + Acc,
+				 F@_1, F@_2, TrUserData);
+skip_length_delimited_CLogin(<<0:1, X:7, Rest/binary>>,
+			     N, Acc, F@_1, F@_2, TrUserData) ->
+    Length = X bsl N + Acc,
+    <<_:Length/binary, Rest2/binary>> = Rest,
+    dfp_read_field_def_CLogin(Rest2, 0, 0, F@_1, F@_2,
+			      TrUserData).
+
+skip_group_CLogin(Bin, FNum, Z2, F@_1, F@_2,
+		  TrUserData) ->
+    {_, Rest} = read_group(Bin, FNum),
+    dfp_read_field_def_CLogin(Rest, 0, Z2, F@_1, F@_2,
+			      TrUserData).
+
+skip_32_CLogin(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
+	       F@_2, TrUserData) ->
+    dfp_read_field_def_CLogin(Rest, Z1, Z2, F@_1, F@_2,
+			      TrUserData).
+
+skip_64_CLogin(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
+	       F@_2, TrUserData) ->
+    dfp_read_field_def_CLogin(Rest, Z1, Z2, F@_1, F@_2,
+			      TrUserData).
+
+d_msg_SRegist(Bin, TrUserData) ->
+    dfp_read_field_def_SRegist(Bin, 0, 0,
+			       id(<<>>, TrUserData), id(0, TrUserData),
+			       TrUserData).
+
+dfp_read_field_def_SRegist(<<10, Rest/binary>>, Z1, Z2,
+			   F@_1, F@_2, TrUserData) ->
+    d_field_SRegist_userid(Rest, Z1, Z2, F@_1, F@_2,
+			   TrUserData);
+dfp_read_field_def_SRegist(<<16, Rest/binary>>, Z1, Z2,
+			   F@_1, F@_2, TrUserData) ->
+    d_field_SRegist_error(Rest, Z1, Z2, F@_1, F@_2,
+			  TrUserData);
+dfp_read_field_def_SRegist(<<>>, 0, 0, F@_1, F@_2, _) ->
+    #'SRegist'{userid = F@_1, error = F@_2};
+dfp_read_field_def_SRegist(Other, Z1, Z2, F@_1, F@_2,
+			   TrUserData) ->
+    dg_read_field_def_SRegist(Other, Z1, Z2, F@_1, F@_2,
+			      TrUserData).
+
+dg_read_field_def_SRegist(<<1:1, X:7, Rest/binary>>, N,
+			  Acc, F@_1, F@_2, TrUserData)
+    when N < 32 - 7 ->
+    dg_read_field_def_SRegist(Rest, N + 7, X bsl N + Acc,
+			      F@_1, F@_2, TrUserData);
+dg_read_field_def_SRegist(<<0:1, X:7, Rest/binary>>, N,
+			  Acc, F@_1, F@_2, TrUserData) ->
+    Key = X bsl N + Acc,
+    case Key of
+      10 ->
+	  d_field_SRegist_userid(Rest, 0, 0, F@_1, F@_2,
+				 TrUserData);
+      16 ->
+	  d_field_SRegist_error(Rest, 0, 0, F@_1, F@_2,
+				TrUserData);
+      _ ->
+	  case Key band 7 of
+	    0 ->
+		skip_varint_SRegist(Rest, 0, 0, F@_1, F@_2, TrUserData);
+	    1 ->
+		skip_64_SRegist(Rest, 0, 0, F@_1, F@_2, TrUserData);
+	    2 ->
+		skip_length_delimited_SRegist(Rest, 0, 0, F@_1, F@_2,
+					      TrUserData);
+	    3 ->
+		skip_group_SRegist(Rest, Key bsr 3, 0, F@_1, F@_2,
+				   TrUserData);
+	    5 -> skip_32_SRegist(Rest, 0, 0, F@_1, F@_2, TrUserData)
+	  end
+    end;
+dg_read_field_def_SRegist(<<>>, 0, 0, F@_1, F@_2, _) ->
+    #'SRegist'{userid = F@_1, error = F@_2}.
+
+d_field_SRegist_userid(<<1:1, X:7, Rest/binary>>, N,
+		       Acc, F@_1, F@_2, TrUserData)
+    when N < 57 ->
+    d_field_SRegist_userid(Rest, N + 7, X bsl N + Acc, F@_1,
+			   F@_2, TrUserData);
+d_field_SRegist_userid(<<0:1, X:7, Rest/binary>>, N,
+		       Acc, _, F@_2, TrUserData) ->
+    {NewFValue, RestF} = begin
+			   Len = X bsl N + Acc,
+			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
+			   {binary:copy(Bytes), Rest2}
+			 end,
+    dfp_read_field_def_SRegist(RestF, 0, 0, NewFValue, F@_2,
+			       TrUserData).
+
+d_field_SRegist_error(<<1:1, X:7, Rest/binary>>, N, Acc,
+		      F@_1, F@_2, TrUserData)
+    when N < 57 ->
+    d_field_SRegist_error(Rest, N + 7, X bsl N + Acc, F@_1,
+			  F@_2, TrUserData);
+d_field_SRegist_error(<<0:1, X:7, Rest/binary>>, N, Acc,
+		      F@_1, _, TrUserData) ->
+    {NewFValue, RestF} = {X bsl N + Acc, Rest},
+    dfp_read_field_def_SRegist(RestF, 0, 0, F@_1, NewFValue,
+			       TrUserData).
+
+skip_varint_SRegist(<<1:1, _:7, Rest/binary>>, Z1, Z2,
+		    F@_1, F@_2, TrUserData) ->
+    skip_varint_SRegist(Rest, Z1, Z2, F@_1, F@_2,
+			TrUserData);
+skip_varint_SRegist(<<0:1, _:7, Rest/binary>>, Z1, Z2,
+		    F@_1, F@_2, TrUserData) ->
+    dfp_read_field_def_SRegist(Rest, Z1, Z2, F@_1, F@_2,
+			       TrUserData).
+
+skip_length_delimited_SRegist(<<1:1, X:7, Rest/binary>>,
+			      N, Acc, F@_1, F@_2, TrUserData)
+    when N < 57 ->
+    skip_length_delimited_SRegist(Rest, N + 7,
+				  X bsl N + Acc, F@_1, F@_2, TrUserData);
+skip_length_delimited_SRegist(<<0:1, X:7, Rest/binary>>,
+			      N, Acc, F@_1, F@_2, TrUserData) ->
+    Length = X bsl N + Acc,
+    <<_:Length/binary, Rest2/binary>> = Rest,
+    dfp_read_field_def_SRegist(Rest2, 0, 0, F@_1, F@_2,
+			       TrUserData).
+
+skip_group_SRegist(Bin, FNum, Z2, F@_1, F@_2,
+		   TrUserData) ->
+    {_, Rest} = read_group(Bin, FNum),
+    dfp_read_field_def_SRegist(Rest, 0, Z2, F@_1, F@_2,
+			       TrUserData).
+
+skip_32_SRegist(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
+		F@_2, TrUserData) ->
+    dfp_read_field_def_SRegist(Rest, Z1, Z2, F@_1, F@_2,
+			       TrUserData).
+
+skip_64_SRegist(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
+		F@_2, TrUserData) ->
+    dfp_read_field_def_SRegist(Rest, Z1, Z2, F@_1, F@_2,
+			       TrUserData).
+
 d_msg_CWxLogin(Bin, TrUserData) ->
     dfp_read_field_def_CWxLogin(Bin, 0, 0,
 				id(<<>>, TrUserData), id(<<>>, TrUserData),
@@ -1216,6 +1126,96 @@ skip_64_CWxLogin(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
     dfp_read_field_def_CWxLogin(Rest, Z1, Z2, F@_1, F@_2,
 				TrUserData).
 
+d_msg_SLoginOut(Bin, TrUserData) ->
+    dfp_read_field_def_SLoginOut(Bin, 0, 0,
+				 id(0, TrUserData), TrUserData).
+
+dfp_read_field_def_SLoginOut(<<8, Rest/binary>>, Z1, Z2,
+			     F@_1, TrUserData) ->
+    d_field_SLoginOut_rtype(Rest, Z1, Z2, F@_1, TrUserData);
+dfp_read_field_def_SLoginOut(<<>>, 0, 0, F@_1, _) ->
+    #'SLoginOut'{rtype = F@_1};
+dfp_read_field_def_SLoginOut(Other, Z1, Z2, F@_1,
+			     TrUserData) ->
+    dg_read_field_def_SLoginOut(Other, Z1, Z2, F@_1,
+				TrUserData).
+
+dg_read_field_def_SLoginOut(<<1:1, X:7, Rest/binary>>,
+			    N, Acc, F@_1, TrUserData)
+    when N < 32 - 7 ->
+    dg_read_field_def_SLoginOut(Rest, N + 7, X bsl N + Acc,
+				F@_1, TrUserData);
+dg_read_field_def_SLoginOut(<<0:1, X:7, Rest/binary>>,
+			    N, Acc, F@_1, TrUserData) ->
+    Key = X bsl N + Acc,
+    case Key of
+      8 ->
+	  d_field_SLoginOut_rtype(Rest, 0, 0, F@_1, TrUserData);
+      _ ->
+	  case Key band 7 of
+	    0 ->
+		skip_varint_SLoginOut(Rest, 0, 0, F@_1, TrUserData);
+	    1 -> skip_64_SLoginOut(Rest, 0, 0, F@_1, TrUserData);
+	    2 ->
+		skip_length_delimited_SLoginOut(Rest, 0, 0, F@_1,
+						TrUserData);
+	    3 ->
+		skip_group_SLoginOut(Rest, Key bsr 3, 0, F@_1,
+				     TrUserData);
+	    5 -> skip_32_SLoginOut(Rest, 0, 0, F@_1, TrUserData)
+	  end
+    end;
+dg_read_field_def_SLoginOut(<<>>, 0, 0, F@_1, _) ->
+    #'SLoginOut'{rtype = F@_1}.
+
+d_field_SLoginOut_rtype(<<1:1, X:7, Rest/binary>>, N,
+			Acc, F@_1, TrUserData)
+    when N < 57 ->
+    d_field_SLoginOut_rtype(Rest, N + 7, X bsl N + Acc,
+			    F@_1, TrUserData);
+d_field_SLoginOut_rtype(<<0:1, X:7, Rest/binary>>, N,
+			Acc, _, TrUserData) ->
+    {NewFValue, RestF} = {X bsl N + Acc, Rest},
+    dfp_read_field_def_SLoginOut(RestF, 0, 0, NewFValue,
+				 TrUserData).
+
+skip_varint_SLoginOut(<<1:1, _:7, Rest/binary>>, Z1, Z2,
+		      F@_1, TrUserData) ->
+    skip_varint_SLoginOut(Rest, Z1, Z2, F@_1, TrUserData);
+skip_varint_SLoginOut(<<0:1, _:7, Rest/binary>>, Z1, Z2,
+		      F@_1, TrUserData) ->
+    dfp_read_field_def_SLoginOut(Rest, Z1, Z2, F@_1,
+				 TrUserData).
+
+skip_length_delimited_SLoginOut(<<1:1, X:7,
+				  Rest/binary>>,
+				N, Acc, F@_1, TrUserData)
+    when N < 57 ->
+    skip_length_delimited_SLoginOut(Rest, N + 7,
+				    X bsl N + Acc, F@_1, TrUserData);
+skip_length_delimited_SLoginOut(<<0:1, X:7,
+				  Rest/binary>>,
+				N, Acc, F@_1, TrUserData) ->
+    Length = X bsl N + Acc,
+    <<_:Length/binary, Rest2/binary>> = Rest,
+    dfp_read_field_def_SLoginOut(Rest2, 0, 0, F@_1,
+				 TrUserData).
+
+skip_group_SLoginOut(Bin, FNum, Z2, F@_1, TrUserData) ->
+    {_, Rest} = read_group(Bin, FNum),
+    dfp_read_field_def_SLoginOut(Rest, 0, Z2, F@_1,
+				 TrUserData).
+
+skip_32_SLoginOut(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
+		  TrUserData) ->
+    dfp_read_field_def_SLoginOut(Rest, Z1, Z2, F@_1,
+				 TrUserData).
+
+skip_64_SLoginOut(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
+		  TrUserData) ->
+    dfp_read_field_def_SLoginOut(Rest, Z1, Z2, F@_1,
+				 TrUserData).
+
 read_group(Bin, FieldNum) ->
     {NumBytes, EndTagLen} = read_gr_b(Bin, 0, 0, 0, 0, FieldNum),
     <<Group:NumBytes/binary, _:EndTagLen/binary, Rest/binary>> = Bin,
@@ -1280,80 +1280,19 @@ merge_msgs(Prev, New, Opts)
     when element(1, Prev) =:= element(1, New) ->
     TrUserData = proplists:get_value(user_data, Opts),
     case Prev of
-      #'SWxLogin'{} ->
-	  merge_msg_SWxLogin(Prev, New, TrUserData);
-      #'CLogin'{} -> merge_msg_CLogin(Prev, New, TrUserData);
-      #'SLogin'{} -> merge_msg_SLogin(Prev, New, TrUserData);
-      #'SRegist'{} ->
-	  merge_msg_SRegist(Prev, New, TrUserData);
-      #'SLoginOut'{} ->
-	  merge_msg_SLoginOut(Prev, New, TrUserData);
       #'CRegist'{} ->
 	  merge_msg_CRegist(Prev, New, TrUserData);
+      #'SWxLogin'{} ->
+	  merge_msg_SWxLogin(Prev, New, TrUserData);
+      #'SLogin'{} -> merge_msg_SLogin(Prev, New, TrUserData);
+      #'CLogin'{} -> merge_msg_CLogin(Prev, New, TrUserData);
+      #'SRegist'{} ->
+	  merge_msg_SRegist(Prev, New, TrUserData);
       #'CWxLogin'{} ->
-	  merge_msg_CWxLogin(Prev, New, TrUserData)
+	  merge_msg_CWxLogin(Prev, New, TrUserData);
+      #'SLoginOut'{} ->
+	  merge_msg_SLoginOut(Prev, New, TrUserData)
     end.
-
-merge_msg_SWxLogin(#'SWxLogin'{userid = PFuserid,
-			       token = PFtoken, error = PFerror},
-		   #'SWxLogin'{userid = NFuserid, token = NFtoken,
-			       error = NFerror},
-		   _) ->
-    #'SWxLogin'{userid =
-		    if NFuserid =:= undefined -> PFuserid;
-		       true -> NFuserid
-		    end,
-		token =
-		    if NFtoken =:= undefined -> PFtoken;
-		       true -> NFtoken
-		    end,
-		error =
-		    if NFerror =:= undefined -> PFerror;
-		       true -> NFerror
-		    end}.
-
-merge_msg_CLogin(#'CLogin'{phone = PFphone,
-			   password = PFpassword},
-		 #'CLogin'{phone = NFphone, password = NFpassword}, _) ->
-    #'CLogin'{phone =
-		  if NFphone =:= undefined -> PFphone;
-		     true -> NFphone
-		  end,
-	      password =
-		  if NFpassword =:= undefined -> PFpassword;
-		     true -> NFpassword
-		  end}.
-
-merge_msg_SLogin(#'SLogin'{userid = PFuserid,
-			   error = PFerror},
-		 #'SLogin'{userid = NFuserid, error = NFerror}, _) ->
-    #'SLogin'{userid =
-		  if NFuserid =:= undefined -> PFuserid;
-		     true -> NFuserid
-		  end,
-	      error =
-		  if NFerror =:= undefined -> PFerror;
-		     true -> NFerror
-		  end}.
-
-merge_msg_SRegist(#'SRegist'{userid = PFuserid,
-			     error = PFerror},
-		  #'SRegist'{userid = NFuserid, error = NFerror}, _) ->
-    #'SRegist'{userid =
-		   if NFuserid =:= undefined -> PFuserid;
-		      true -> NFuserid
-		   end,
-	       error =
-		   if NFerror =:= undefined -> PFerror;
-		      true -> NFerror
-		   end}.
-
-merge_msg_SLoginOut(#'SLoginOut'{rtype = PFrtype},
-		    #'SLoginOut'{rtype = NFrtype}, _) ->
-    #'SLoginOut'{rtype =
-		     if NFrtype =:= undefined -> PFrtype;
-			true -> NFrtype
-		     end}.
 
 merge_msg_CRegist(#'CRegist'{nickname = PFnickname,
 			     phone = PFphone, password = PFpassword},
@@ -1373,6 +1312,60 @@ merge_msg_CRegist(#'CRegist'{nickname = PFnickname,
 		      true -> NFpassword
 		   end}.
 
+merge_msg_SWxLogin(#'SWxLogin'{userid = PFuserid,
+			       token = PFtoken, error = PFerror},
+		   #'SWxLogin'{userid = NFuserid, token = NFtoken,
+			       error = NFerror},
+		   _) ->
+    #'SWxLogin'{userid =
+		    if NFuserid =:= undefined -> PFuserid;
+		       true -> NFuserid
+		    end,
+		token =
+		    if NFtoken =:= undefined -> PFtoken;
+		       true -> NFtoken
+		    end,
+		error =
+		    if NFerror =:= undefined -> PFerror;
+		       true -> NFerror
+		    end}.
+
+merge_msg_SLogin(#'SLogin'{userid = PFuserid,
+			   error = PFerror},
+		 #'SLogin'{userid = NFuserid, error = NFerror}, _) ->
+    #'SLogin'{userid =
+		  if NFuserid =:= undefined -> PFuserid;
+		     true -> NFuserid
+		  end,
+	      error =
+		  if NFerror =:= undefined -> PFerror;
+		     true -> NFerror
+		  end}.
+
+merge_msg_CLogin(#'CLogin'{phone = PFphone,
+			   password = PFpassword},
+		 #'CLogin'{phone = NFphone, password = NFpassword}, _) ->
+    #'CLogin'{phone =
+		  if NFphone =:= undefined -> PFphone;
+		     true -> NFphone
+		  end,
+	      password =
+		  if NFpassword =:= undefined -> PFpassword;
+		     true -> NFpassword
+		  end}.
+
+merge_msg_SRegist(#'SRegist'{userid = PFuserid,
+			     error = PFerror},
+		  #'SRegist'{userid = NFuserid, error = NFerror}, _) ->
+    #'SRegist'{userid =
+		   if NFuserid =:= undefined -> PFuserid;
+		      true -> NFuserid
+		   end,
+	       error =
+		   if NFerror =:= undefined -> PFerror;
+		      true -> NFerror
+		   end}.
+
 merge_msg_CWxLogin(#'CWxLogin'{wxcode = PFwxcode,
 			       token = PFtoken},
 		   #'CWxLogin'{wxcode = NFwxcode, token = NFtoken}, _) ->
@@ -1385,84 +1378,36 @@ merge_msg_CWxLogin(#'CWxLogin'{wxcode = PFwxcode,
 		       true -> NFtoken
 		    end}.
 
+merge_msg_SLoginOut(#'SLoginOut'{rtype = PFrtype},
+		    #'SLoginOut'{rtype = NFrtype}, _) ->
+    #'SLoginOut'{rtype =
+		     if NFrtype =:= undefined -> PFrtype;
+			true -> NFrtype
+		     end}.
+
 
 verify_msg(Msg) -> verify_msg(Msg, []).
 
 verify_msg(Msg, Opts) ->
     TrUserData = proplists:get_value(user_data, Opts),
     case Msg of
-      #'SWxLogin'{} ->
-	  v_msg_SWxLogin(Msg, ['SWxLogin'], TrUserData);
-      #'CLogin'{} ->
-	  v_msg_CLogin(Msg, ['CLogin'], TrUserData);
-      #'SLogin'{} ->
-	  v_msg_SLogin(Msg, ['SLogin'], TrUserData);
-      #'SRegist'{} ->
-	  v_msg_SRegist(Msg, ['SRegist'], TrUserData);
-      #'SLoginOut'{} ->
-	  v_msg_SLoginOut(Msg, ['SLoginOut'], TrUserData);
       #'CRegist'{} ->
 	  v_msg_CRegist(Msg, ['CRegist'], TrUserData);
+      #'SWxLogin'{} ->
+	  v_msg_SWxLogin(Msg, ['SWxLogin'], TrUserData);
+      #'SLogin'{} ->
+	  v_msg_SLogin(Msg, ['SLogin'], TrUserData);
+      #'CLogin'{} ->
+	  v_msg_CLogin(Msg, ['CLogin'], TrUserData);
+      #'SRegist'{} ->
+	  v_msg_SRegist(Msg, ['SRegist'], TrUserData);
       #'CWxLogin'{} ->
 	  v_msg_CWxLogin(Msg, ['CWxLogin'], TrUserData);
+      #'SLoginOut'{} ->
+	  v_msg_SLoginOut(Msg, ['SLoginOut'], TrUserData);
       _ -> mk_type_error(not_a_known_message, Msg, [])
     end.
 
-
--dialyzer({nowarn_function,v_msg_SWxLogin/3}).
-v_msg_SWxLogin(#'SWxLogin'{userid = F1, token = F2,
-			   error = F3},
-	       Path, _) ->
-    if F1 == undefined -> ok;
-       true -> v_type_string(F1, [userid | Path])
-    end,
-    if F2 == undefined -> ok;
-       true -> v_type_string(F2, [token | Path])
-    end,
-    if F3 == undefined -> ok;
-       true -> v_type_uint32(F3, [error | Path])
-    end,
-    ok.
-
--dialyzer({nowarn_function,v_msg_CLogin/3}).
-v_msg_CLogin(#'CLogin'{phone = F1, password = F2}, Path,
-	     _) ->
-    if F1 == undefined -> ok;
-       true -> v_type_string(F1, [phone | Path])
-    end,
-    if F2 == undefined -> ok;
-       true -> v_type_string(F2, [password | Path])
-    end,
-    ok.
-
--dialyzer({nowarn_function,v_msg_SLogin/3}).
-v_msg_SLogin(#'SLogin'{userid = F1, error = F2}, Path,
-	     _) ->
-    if F1 == undefined -> ok;
-       true -> v_type_string(F1, [userid | Path])
-    end,
-    if F2 == undefined -> ok;
-       true -> v_type_uint32(F2, [error | Path])
-    end,
-    ok.
-
--dialyzer({nowarn_function,v_msg_SRegist/3}).
-v_msg_SRegist(#'SRegist'{userid = F1, error = F2}, Path,
-	      _) ->
-    if F1 == undefined -> ok;
-       true -> v_type_string(F1, [userid | Path])
-    end,
-    if F2 == undefined -> ok;
-       true -> v_type_uint32(F2, [error | Path])
-    end,
-    ok.
-
--dialyzer({nowarn_function,v_msg_SLoginOut/3}).
-v_msg_SLoginOut(#'SLoginOut'{rtype = F1}, Path, _) ->
-    if F1 == undefined -> ok;
-       true -> v_type_uint32(F1, [rtype | Path])
-    end,
-    ok.
 
 -dialyzer({nowarn_function,v_msg_CRegist/3}).
 v_msg_CRegist(#'CRegist'{nickname = F1, phone = F2,
@@ -1479,6 +1424,54 @@ v_msg_CRegist(#'CRegist'{nickname = F1, phone = F2,
     end,
     ok.
 
+-dialyzer({nowarn_function,v_msg_SWxLogin/3}).
+v_msg_SWxLogin(#'SWxLogin'{userid = F1, token = F2,
+			   error = F3},
+	       Path, _) ->
+    if F1 == undefined -> ok;
+       true -> v_type_string(F1, [userid | Path])
+    end,
+    if F2 == undefined -> ok;
+       true -> v_type_string(F2, [token | Path])
+    end,
+    if F3 == undefined -> ok;
+       true -> v_type_uint32(F3, [error | Path])
+    end,
+    ok.
+
+-dialyzer({nowarn_function,v_msg_SLogin/3}).
+v_msg_SLogin(#'SLogin'{userid = F1, error = F2}, Path,
+	     _) ->
+    if F1 == undefined -> ok;
+       true -> v_type_string(F1, [userid | Path])
+    end,
+    if F2 == undefined -> ok;
+       true -> v_type_uint32(F2, [error | Path])
+    end,
+    ok.
+
+-dialyzer({nowarn_function,v_msg_CLogin/3}).
+v_msg_CLogin(#'CLogin'{phone = F1, password = F2}, Path,
+	     _) ->
+    if F1 == undefined -> ok;
+       true -> v_type_string(F1, [phone | Path])
+    end,
+    if F2 == undefined -> ok;
+       true -> v_type_string(F2, [password | Path])
+    end,
+    ok.
+
+-dialyzer({nowarn_function,v_msg_SRegist/3}).
+v_msg_SRegist(#'SRegist'{userid = F1, error = F2}, Path,
+	      _) ->
+    if F1 == undefined -> ok;
+       true -> v_type_string(F1, [userid | Path])
+    end,
+    if F2 == undefined -> ok;
+       true -> v_type_uint32(F2, [error | Path])
+    end,
+    ok.
+
 -dialyzer({nowarn_function,v_msg_CWxLogin/3}).
 v_msg_CWxLogin(#'CWxLogin'{wxcode = F1, token = F2},
 	       Path, _) ->
@@ -1487,6 +1480,13 @@ v_msg_CWxLogin(#'CWxLogin'{wxcode = F1, token = F2},
     end,
     if F2 == undefined -> ok;
        true -> v_type_string(F2, [token | Path])
+    end,
+    ok.
+
+-dialyzer({nowarn_function,v_msg_SLoginOut/3}).
+v_msg_SLoginOut(#'SLoginOut'{rtype = F1}, Path, _) ->
+    if F1 == undefined -> ok;
+       true -> v_type_uint32(F1, [rtype | Path])
     end,
     ok.
 
@@ -1534,56 +1534,56 @@ id(X, _TrUserData) -> X.
 
 
 get_msg_defs() ->
-    [{{msg, 'SWxLogin'},
-      [#field{name = userid, fnum = 1, rnum = 2,
-	      type = string, occurrence = optional, opts = []},
-       #field{name = token, fnum = 2, rnum = 3, type = string,
-	      occurrence = optional, opts = []},
-       #field{name = error, fnum = 3, rnum = 4, type = uint32,
-	      occurrence = optional, opts = []}]},
-     {{msg, 'CLogin'},
-      [#field{name = phone, fnum = 1, rnum = 2, type = string,
-	      occurrence = optional, opts = []},
-       #field{name = password, fnum = 2, rnum = 3,
-	      type = string, occurrence = optional, opts = []}]},
-     {{msg, 'SLogin'},
-      [#field{name = userid, fnum = 1, rnum = 2,
-	      type = string, occurrence = optional, opts = []},
-       #field{name = error, fnum = 2, rnum = 3, type = uint32,
-	      occurrence = optional, opts = []}]},
-     {{msg, 'SRegist'},
-      [#field{name = userid, fnum = 1, rnum = 2,
-	      type = string, occurrence = optional, opts = []},
-       #field{name = error, fnum = 2, rnum = 3, type = uint32,
-	      occurrence = optional, opts = []}]},
-     {{msg, 'SLoginOut'},
-      [#field{name = rtype, fnum = 1, rnum = 2, type = uint32,
-	      occurrence = optional, opts = []}]},
-     {{msg, 'CRegist'},
+    [{{msg, 'CRegist'},
       [#field{name = nickname, fnum = 1, rnum = 2,
 	      type = string, occurrence = optional, opts = []},
        #field{name = phone, fnum = 2, rnum = 3, type = string,
 	      occurrence = optional, opts = []},
        #field{name = password, fnum = 3, rnum = 4,
 	      type = string, occurrence = optional, opts = []}]},
+     {{msg, 'SWxLogin'},
+      [#field{name = userid, fnum = 1, rnum = 2,
+	      type = string, occurrence = optional, opts = []},
+       #field{name = token, fnum = 2, rnum = 3, type = string,
+	      occurrence = optional, opts = []},
+       #field{name = error, fnum = 3, rnum = 4, type = uint32,
+	      occurrence = optional, opts = []}]},
+     {{msg, 'SLogin'},
+      [#field{name = userid, fnum = 1, rnum = 2,
+	      type = string, occurrence = optional, opts = []},
+       #field{name = error, fnum = 2, rnum = 3, type = uint32,
+	      occurrence = optional, opts = []}]},
+     {{msg, 'CLogin'},
+      [#field{name = phone, fnum = 1, rnum = 2, type = string,
+	      occurrence = optional, opts = []},
+       #field{name = password, fnum = 2, rnum = 3,
+	      type = string, occurrence = optional, opts = []}]},
+     {{msg, 'SRegist'},
+      [#field{name = userid, fnum = 1, rnum = 2,
+	      type = string, occurrence = optional, opts = []},
+       #field{name = error, fnum = 2, rnum = 3, type = uint32,
+	      occurrence = optional, opts = []}]},
      {{msg, 'CWxLogin'},
       [#field{name = wxcode, fnum = 1, rnum = 2,
 	      type = string, occurrence = optional, opts = []},
        #field{name = token, fnum = 2, rnum = 3, type = string,
+	      occurrence = optional, opts = []}]},
+     {{msg, 'SLoginOut'},
+      [#field{name = rtype, fnum = 1, rnum = 2, type = uint32,
 	      occurrence = optional, opts = []}]}].
 
 
 get_msg_names() ->
-    ['SWxLogin', 'CLogin', 'SLogin', 'SRegist', 'SLoginOut',
-     'CRegist', 'CWxLogin'].
+    ['CRegist', 'SWxLogin', 'SLogin', 'CLogin', 'SRegist',
+     'CWxLogin', 'SLoginOut'].
 
 
 get_group_names() -> [].
 
 
 get_msg_or_group_names() ->
-    ['SWxLogin', 'CLogin', 'SLogin', 'SRegist', 'SLoginOut',
-     'CRegist', 'CWxLogin'].
+    ['CRegist', 'SWxLogin', 'SLogin', 'CLogin', 'SRegist',
+     'CWxLogin', 'SLoginOut'].
 
 
 get_enum_names() -> [].
@@ -1601,31 +1601,6 @@ fetch_enum_def(EnumName) ->
     erlang:error({no_such_enum, EnumName}).
 
 
-find_msg_def('SWxLogin') ->
-    [#field{name = userid, fnum = 1, rnum = 2,
-	    type = string, occurrence = optional, opts = []},
-     #field{name = token, fnum = 2, rnum = 3, type = string,
-	    occurrence = optional, opts = []},
-     #field{name = error, fnum = 3, rnum = 4, type = uint32,
-	    occurrence = optional, opts = []}];
-find_msg_def('CLogin') ->
-    [#field{name = phone, fnum = 1, rnum = 2, type = string,
-	    occurrence = optional, opts = []},
-     #field{name = password, fnum = 2, rnum = 3,
-	    type = string, occurrence = optional, opts = []}];
-find_msg_def('SLogin') ->
-    [#field{name = userid, fnum = 1, rnum = 2,
-	    type = string, occurrence = optional, opts = []},
-     #field{name = error, fnum = 2, rnum = 3, type = uint32,
-	    occurrence = optional, opts = []}];
-find_msg_def('SRegist') ->
-    [#field{name = userid, fnum = 1, rnum = 2,
-	    type = string, occurrence = optional, opts = []},
-     #field{name = error, fnum = 2, rnum = 3, type = uint32,
-	    occurrence = optional, opts = []}];
-find_msg_def('SLoginOut') ->
-    [#field{name = rtype, fnum = 1, rnum = 2, type = uint32,
-	    occurrence = optional, opts = []}];
 find_msg_def('CRegist') ->
     [#field{name = nickname, fnum = 1, rnum = 2,
 	    type = string, occurrence = optional, opts = []},
@@ -1633,10 +1608,35 @@ find_msg_def('CRegist') ->
 	    occurrence = optional, opts = []},
      #field{name = password, fnum = 3, rnum = 4,
 	    type = string, occurrence = optional, opts = []}];
+find_msg_def('SWxLogin') ->
+    [#field{name = userid, fnum = 1, rnum = 2,
+	    type = string, occurrence = optional, opts = []},
+     #field{name = token, fnum = 2, rnum = 3, type = string,
+	    occurrence = optional, opts = []},
+     #field{name = error, fnum = 3, rnum = 4, type = uint32,
+	    occurrence = optional, opts = []}];
+find_msg_def('SLogin') ->
+    [#field{name = userid, fnum = 1, rnum = 2,
+	    type = string, occurrence = optional, opts = []},
+     #field{name = error, fnum = 2, rnum = 3, type = uint32,
+	    occurrence = optional, opts = []}];
+find_msg_def('CLogin') ->
+    [#field{name = phone, fnum = 1, rnum = 2, type = string,
+	    occurrence = optional, opts = []},
+     #field{name = password, fnum = 2, rnum = 3,
+	    type = string, occurrence = optional, opts = []}];
+find_msg_def('SRegist') ->
+    [#field{name = userid, fnum = 1, rnum = 2,
+	    type = string, occurrence = optional, opts = []},
+     #field{name = error, fnum = 2, rnum = 3, type = uint32,
+	    occurrence = optional, opts = []}];
 find_msg_def('CWxLogin') ->
     [#field{name = wxcode, fnum = 1, rnum = 2,
 	    type = string, occurrence = optional, opts = []},
      #field{name = token, fnum = 2, rnum = 3, type = string,
+	    occurrence = optional, opts = []}];
+find_msg_def('SLoginOut') ->
+    [#field{name = rtype, fnum = 1, rnum = 2, type = uint32,
 	    occurrence = optional, opts = []}];
 find_msg_def(_) -> error.
 
