@@ -63,8 +63,8 @@ websocket_handle({text, Msg}, State) ->
             ?DEBUG("Result: ~p, Bin: ~p", [Result2, Bin2])
     end,
     %%
-    %Out = os:cmd("cat /dev/urandom | od -x | tr -d ' ' | head -n 1"),
-    %?DEBUG("out ~p", [Out]),
+    Out = os:cmd("head /dev/urandom | od -x | tr -d ' ' | cut -c8- | head -c 32"),
+    ?INFO("out ~p", [Out]),
     %%
     Mac = aes:sha_example(),
     ?INFO("Mac ~p", [Mac]),
