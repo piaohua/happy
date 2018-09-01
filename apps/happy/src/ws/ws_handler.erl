@@ -14,7 +14,6 @@
 -export([websocket_terminate/2]).
 
 -include("../../include/define.hrl").
--include("../../include/login_pb.hrl").
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -43,34 +42,6 @@ websocket_handle({text, Msg}, State) ->
     ?INFO("happy websocket_handle Request: ~p", [Msg]),
     %% self() ! stop,
     %% self() ! close,
-    S2C = #'SLogin'{
-             userid = <<"222">>
-            },
-    case packet:p(S2C) of 
-        {ok, Bin} ->
-            ?DEBUG("Bin: ~p", [Bin]);
-        {Result, Bin} ->
-            ?DEBUG("Result: ~p, Bin: ~p", [Result, Bin])
-    end,
-    C2S = #'CLogin'{
-             phone = <<"111">>,
-             password = <<"sss">>
-             },
-    case unpack:p(C2S) of 
-        {ok, Bin2} ->
-            ?DEBUG("Bin: ~p", [Bin2]);
-        {Result2, Bin2} ->
-            ?DEBUG("Result: ~p, Bin: ~p", [Result2, Bin2])
-    end,
-    %%
-    Out = os:cmd("head /dev/urandom | od -x | tr -d ' ' | cut -c8- | head -c 32"),
-    ?INFO("out ~p", [Out]),
-    %%
-    Mac = aes:sha_example(),
-    ?INFO("Mac ~p", [Mac]),
-    B = aes:aes_example(),
-    ?INFO("Mac ~p", [B]),
-    %%
     {reply, {text, << "That's what she said! happy ", Msg/binary >>}, State};
 
 websocket_handle(_Data, State) ->

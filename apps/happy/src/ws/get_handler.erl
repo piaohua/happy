@@ -10,6 +10,7 @@
 -export([init/2]).
 
 -include("../../include/define.hrl").
+-include("../../include/login_pb.hrl").
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -23,6 +24,47 @@ init(Req0, Opts) ->
 
 echo(<<"GET">>, undefined, Req) ->
 	cowboy_req:reply(400, #{}, <<"Missing echo parameter.">>, Req);
+echo(<<"GET">>, <<"session">>, Req) ->
+    Out = os:cmd("head /dev/urandom | od -x | tr -d ' ' | cut -c8- | head -c 32"),
+    ?INFO("out ~p", [Out]),
+	cowboy_req:reply(200, #{
+		<<"content-type">> => <<"text/plain; charset=utf-8">>
+	}, Out, Req);
+echo(<<"GET">>, <<"aes">>, Req) ->
+    Mac = aes:sha_example(),
+    ?INFO("Mac ~p", [Mac]),
+    B = aes:aes_example(),
+    ?INFO("Mac ~p", [B]),
+	cowboy_req:reply(200, #{
+		<<"content-type">> => <<"text/plain; charset=utf-8">>
+	}, Mac, Req);
+echo(<<"GET">>, <<"packet">>, Req) ->
+    S2C = #'SLogin'{
+             userid = <<"222">>
+            },
+    case packet:p(S2C) of 
+        {ok, Bin} ->
+            ?DEBUG("Bin: ~p", [Bin]);
+        {Result, Bin} ->
+            ?DEBUG("Result: ~p, Bin: ~p", [Result, Bin])
+    end,
+	cowboy_req:reply(200, #{
+		<<"content-type">> => <<"text/plain; charset=utf-8">>
+	}, <<"ok">>, Req);
+echo(<<"GET">>, <<"unpack">>, Req) ->
+    C2S = #'CLogin'{
+             phone = <<"111">>,
+             password = <<"sss">>
+             },
+    case unpack:p(C2S) of 
+        {ok, Bin2} ->
+            ?DEBUG("Bin: ~p", [Bin2]);
+        {Result2, Bin2} ->
+            ?DEBUG("Result: ~p, Bin: ~p", [Result2, Bin2])
+    end,
+	cowboy_req:reply(200, #{
+		<<"content-type">> => <<"text/plain; charset=utf-8">>
+	}, <<"ok">>, Req);
 echo(<<"GET">>, Echo, Req) ->
     ?INFO("echo get: ~p", [Echo]),
 	cowboy_req:reply(200, #{
