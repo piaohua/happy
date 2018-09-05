@@ -65,6 +65,12 @@ echo(<<"GET">>, <<"unpack">>, Req) ->
 	cowboy_req:reply(200, #{
 		<<"content-type">> => <<"text/plain; charset=utf-8">>
 	}, <<"ok">>, Req);
+echo(<<"GET">>, <<"js_code">>, Req) ->
+	#{js_code := Code} = cowboy_req:match_qs([{js_code, [], undefined}], Req),
+    ?INFO("js_code get: ~p", [Code]),
+	cowboy_req:reply(200, #{
+		<<"content-type">> => <<"text/plain; charset=utf-8">>
+	}, <<"session">>, Req);
 echo(<<"GET">>, Echo, Req) ->
     ?INFO("echo get: ~p", [Echo]),
 	cowboy_req:reply(200, #{

@@ -24,16 +24,36 @@ init(Req0, Opts) ->
 maybe_echo(<<"POST">>, true, Req0) ->
 	{ok, PostVals, Req} = cowboy_req:read_urlencoded_body(Req0),
 	Echo = proplists:get_value(<<"echo">>, PostVals),
-	echo(Echo, Req);
+    ?INFO("js_code get: ~p", [Echo]),
+	Code = proplists:get_value(<<"js_code">>, PostVals),
+    ?INFO("js_code get: ~p", [Code]),
+	echo(Echo, Code, Req);
 maybe_echo(<<"POST">>, false, Req) ->
-	cowboy_req:reply(400, [], <<"Missing body.">>, Req);
+	cowboy_req:reply(400, #{}, <<"Missing body.">>, Req);
 maybe_echo(_, _, Req) ->
 	%% Method not allowed.
 	cowboy_req:reply(405, Req).
 
-echo(undefined, Req) ->
-	cowboy_req:reply(400, [], <<"Missing echo parameter.">>, Req);
-echo(Echo, Req) ->
+echo(undefined, _, Req) ->
+	cowboy_req:reply(400, #{}, <<"Missing echo parameter.">>, Req);
+echo(<<"session">>, _, Req) ->
+    Out = os:cmd("head /dev/urandom | od -x | tr -d ' ' | cut -c8- | head -c 32"),
+    ?INFO("out ~p", [Out]),
+	cowboy_req:reply(200, #{
+		<<"content-type">> => <<"text/plain; charset=utf-8">>
+	}, Out, Req);
+echo(<<"js_code">>, undefined, Req) ->
+	cowboy_req:reply(400, #{}, <<"Missing js_code parameter.">>, Req);
+echo(<<"js_code">>, <<>>, Req) ->
+	cowboy_req:reply(200, #{}, <<"Missing js_code parameter.">>, Req);
+echo(<<"js_code">>, Code, Req) ->
+    ?INFO("js_code get: ~p", [Code]),
+    Out = os:cmd("head /dev/urandom | od -x | tr -d ' ' | cut -c8- | head -c 32"),
+    ?INFO("out ~p", [Out]),
+	cowboy_req:reply(200, #{
+		<<"content-type">> => <<"text/plain; charset=utf-8">>
+	}, Out, Req);
+echo(Echo, _, Req) ->
     ?INFO("echo get: ~p", [Echo]),
 	cowboy_req:reply(200, #{
 		<<"content-type">> => <<"text/plain; charset=utf-8">>
