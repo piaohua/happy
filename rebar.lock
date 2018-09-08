@@ -20,6 +20,10 @@
   {git,"https://github.com/tomas-abrahamsson/gpb.git",
        {ref,"e984d9a0cb4ff295ac9ff14cfcd774f8534847bd"}},
   0},
+ {<<"gun">>,
+  {git,"https://github.com/ninenines/gun.git",
+       {ref,"f3149399815257b934ca5c47c9b9f2d9de198bc6"}},
+  0},
  {<<"lager">>,
   {git,"https://github.com/erlang-lager/lager.git",
        {ref,"6cc6b125ad55835748cd847f03314698ae439aea"}},
@@ -43,6 +47,10 @@
  {<<"rebar3_gpb_plugin">>,
   {git,"https://github.com/lrascao/rebar3_gpb_plugin.git",
        {ref,"cd2c68f1b7159988144e25974dde8e2db7911682"}},
+  0},
+ {<<"rfc4627_jsonrpc">>,
+  {git,"https://github.com/tonyg/erlang-rfc4627.git",
+       {ref,"1614d95831567ae8b060ce484f7b291048edec2d"}},
   0}]}.
 [
 {pkg_hash,[

@@ -68,9 +68,23 @@ echo(<<"GET">>, <<"unpack">>, Req) ->
 echo(<<"GET">>, <<"js_code">>, Req) ->
 	#{js_code := Code} = cowboy_req:match_qs([{js_code, [], undefined}], Req),
     ?INFO("js_code get: ~p", [Code]),
-	cowboy_req:reply(200, #{
-		<<"content-type">> => <<"text/plain; charset=utf-8">>
-	}, <<"session">>, Req);
+    %% 返回 3rd_session
+    {ok, Appid} = application:get_env(happy, appid),
+    {ok, Secret} = application:get_env(happy, secret),
+    {ok, Query} = application:get_env(happy, jscode2session),
+    %Body = "{\"errcode\":40013,\"errmsg\":\"invalid appid, hints: [ req_id: oA4pda0426hb41 ]\"}",
+    %Body = "{\"openid\": \"OPENID\", \"session_key\": \"SESSIONKEY\", \"unionid\": \"UNIONID\"}",
+    case weixin:jscode2session(Appid, Secret, Query, Code) of
+        {ok, Kvs} ->
+            ?INFO("Kvs: ~p", [Kvs]),
+            cowboy_req:reply(200, #{
+              <<"content-type">> => <<"text/plain; charset=utf-8">>
+             }, Kvs, Req);
+        {error, Body} ->
+            cowboy_req:reply(200, #{
+              <<"content-type">> => <<"text/plain; charset=utf-8">>
+             }, list_to_binary(Body), Req)
+    end;
 echo(<<"GET">>, Echo, Req) ->
     ?INFO("echo get: ~p", [Echo]),
 	cowboy_req:reply(200, #{

@@ -21,12 +21,23 @@
 
 init(Req, Opts) ->
     ?DEBUG("init Request: ~p", [Req]),
-    {cowboy_websocket, Req, Opts, #{
+	#{session := Session} = cowboy_req:match_qs([{session, [], undefined}], Req),
+    ?DEBUG("Session ~p", [Session]),
+    ?DEBUG("Opts ~p", [Opts]),
+    {cowboy_websocket, Req, #{session => Session}, #{
         compress => true, %% frame compression extension
         idle_timeout => 30000, %% It defaults to 60000
         max_frame_size => 1024}}.
 
 websocket_init(State) ->
+    ?DEBUG("State ~p", [State]),
+    #{session := Session} = State,
+    case Session of
+        <<>> ->
+            self() ! stop;
+        _ ->
+            ok
+    end,
     %erlang:start_timer(1000, self(), <<"Hello!">>),
     {ok, State}.
 
