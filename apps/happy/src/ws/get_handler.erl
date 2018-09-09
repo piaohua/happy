@@ -39,12 +39,12 @@ echo(<<"GET">>, <<"aes">>, Req) ->
 		<<"content-type">> => <<"text/plain; charset=utf-8">>
 	}, Mac, Req);
 echo(<<"GET">>, <<"packet">>, Req) ->
-    S2C = #'SLogin'{
+    S2C = #'SRegist'{
              userid = <<"222">>
             },
     case packet:p(S2C) of 
         {ok, Bin} ->
-            ?DEBUG("Bin: ~p", [Bin]);
+            ?INFO("Bin: ~p", [Bin]);
         {Result, Bin} ->
             ?DEBUG("Result: ~p, Bin: ~p", [Result, Bin])
     end,
@@ -52,15 +52,16 @@ echo(<<"GET">>, <<"packet">>, Req) ->
 		<<"content-type">> => <<"text/plain; charset=utf-8">>
 	}, <<"ok">>, Req);
 echo(<<"GET">>, <<"unpack">>, Req) ->
-    C2S = #'CLogin'{
-             phone = <<"111">>,
-             password = <<"sss">>
-             },
+    %C2S = #'CRegist'{
+    %         phone = <<"111">>,
+    %         password = <<"sss">>
+    %         },
+    C2S = <<0,0,3,234,10,3,50,50,50>>,
     case unpack:p(C2S) of 
-        {ok, Bin2} ->
-            ?DEBUG("Bin: ~p", [Bin2]);
-        {Result2, Bin2} ->
-            ?DEBUG("Result: ~p, Bin: ~p", [Result2, Bin2])
+        {ok, Msg} ->
+            ?INFO("Msg: ~p", [Msg]);
+        {Result, Bin} ->
+            ?DEBUG("Result: ~p, Bin: ~p", [Result, Bin])
     end,
 	cowboy_req:reply(200, #{
 		<<"content-type">> => <<"text/plain; charset=utf-8">>

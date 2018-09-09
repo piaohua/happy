@@ -14,11 +14,19 @@
          ,sha/2
          ,sha_example/0
          ,aes_example/0
+         ,decrypt_wechat/3
         ]).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
+
+%% @see decrypto_aes_cbc
+decrypt_wechat(EncryptedData, SessionKey, Ivec) ->
+    Ciphertext = base64:decode(EncryptedData),
+    Key = base64:decode(SessionKey),
+    Iv = base64:decode(Ivec),
+    decrypto_aes_cbc(Ciphertext, Key, Iv).
 
 %% @doc aes 解密
 %%

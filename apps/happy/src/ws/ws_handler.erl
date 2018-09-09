@@ -14,6 +14,7 @@
 -export([websocket_terminate/2]).
 
 -include("../../include/define.hrl").
+-include("../../include/game_login_pb.hrl").
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -24,14 +25,14 @@ init(Req, Opts) ->
 	#{session := Session} = cowboy_req:match_qs([{session, [], undefined}], Req),
     ?DEBUG("Session ~p", [Session]),
     ?DEBUG("Opts ~p", [Opts]),
-    {cowboy_websocket, Req, #{session => Session}, #{
+    {cowboy_websocket, Req, #{<<"session">> => Session, <<"online">> => false}, #{
         compress => true, %% frame compression extension
         idle_timeout => 30000, %% It defaults to 60000
         max_frame_size => 1024}}.
 
 websocket_init(State) ->
     ?DEBUG("State ~p", [State]),
-    #{session := Session} = State,
+    #{<<"session">> := Session} = State,
     case Session of
         <<>> ->
             self() ! stop;
@@ -47,6 +48,32 @@ websocket_handle(ping, State) ->
 
 websocket_handle({binary, BinData}, State) ->
     ?INFO("happy websocket_handle Request: ~p", [BinData]),
+    case unpack:p(BinData) of 
+        {ok, Msg} when is_record(Msg, 'CWxLogin') ->
+            ?INFO("Msg: ~p", [Msg]),
+
+            #{<<"session">> := Session} = State,
+            case mongo_worker:find_one(<<"col_user_test">>, #{<<"session">> => Session}) of
+                #{<<"session_key">> := SessionKey} when SessionKey =/= <<>> ->
+                    %%验证sha1( rawData + sessionKey )
+                    Sign = list_to_binary(aes:sha(Msg#'CWxLogin'.rawData, SessionKey)),
+                    case Sign == Msg#'CWxLogin'.signature of
+                        true ->
+                            %%验证敏感信息
+                            {ok, UserInfoBin} = aes:decrypt_wechat(Msg#'CWxLogin'.encryptedData, SessionKey, Msg#'CWxLogin'.iv),
+                            ?INFO("UserInfoBin: ~p", [UserInfoBin]),
+                            %% TODO login handler
+                            UserInfoBin;
+                        false -> ?ERROR("sign failed")
+                    end;
+                _ -> ?ERROR("session invaild")
+            end;
+
+        {ok, Msg} ->
+            ?INFO("Msg: ~p", [Msg]);
+        {Result, Bin} ->
+            ?DEBUG("Result: ~p, Bin: ~p", [Result, Bin])
+    end,
     {reply, {binary, BinData}, State};
 
 websocket_handle({text, Msg}, State) ->

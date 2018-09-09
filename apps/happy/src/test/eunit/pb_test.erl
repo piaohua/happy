@@ -16,9 +16,9 @@
 -include("login_pb.hrl").
 
 pb_msg_test() ->
-    Msg = #'CLogin'{phone = "137"},
+    Msg = #'CRegist'{phone = "137"},
     Bin = login_pb:encode_msg(Msg),
-    Msg2 = login_pb:decode_msg(Bin, 'CLogin'),
+    Msg2 = login_pb:decode_msg(Bin, 'CRegist'),
     ?_assert(Msg =:= Msg2).
 
 basic_test_() ->

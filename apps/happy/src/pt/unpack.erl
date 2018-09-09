@@ -14,6 +14,7 @@
 -export([p/1]).
 
 -include("login_pb.hrl").
+-include("game_login_pb.hrl").
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
