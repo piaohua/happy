@@ -23,6 +23,7 @@
          ,find/4
          ,find_one/2
          ,find_one/3
+         ,find_one/4
          ,count/2
          ,count/3
         ]).
@@ -93,10 +94,12 @@ find(PoolName, Collection, Selector, Args) ->
       Collection :: binary(),
       Selector :: map().
 find_one(Collection, Selector) ->
-    find_one(?DEFAULT_POOL, Collection, Selector).
-find_one(PoolName, Collection, Selector) ->
+    find_one(?DEFAULT_POOL, Collection, Selector, #{}).
+find_one(Collection, Selector, Args) ->
+    find_one(?DEFAULT_POOL, Collection, Selector, Args).
+find_one(PoolName, Collection, Selector, Args) ->
     poolboy:transaction(PoolName, fun(Worker) ->
-    mc_worker_api:find_one(Worker, Collection, Selector)
+    mc_worker_api:find_one(Worker, Collection, Selector, Args)
     end).
 
 -spec count(Collection, Selector) -> integer() when

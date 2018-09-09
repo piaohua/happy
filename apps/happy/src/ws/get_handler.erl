@@ -75,11 +75,12 @@ echo(<<"GET">>, <<"js_code">>, Req) ->
     %Body = "{\"errcode\":40013,\"errmsg\":\"invalid appid, hints: [ req_id: oA4pda0426hb41 ]\"}",
     %Body = "{\"openid\": \"OPENID\", \"session_key\": \"SESSIONKEY\", \"unionid\": \"UNIONID\"}",
     case weixin:jscode2session(Appid, Secret, Query, Code) of
-        {ok, Kvs} ->
-            ?INFO("Kvs: ~p", [Kvs]),
+        {ok, Tuple} ->
+            ?INFO("Tuple: ~p", [Tuple]),
+            Result = echo2(Tuple),
             cowboy_req:reply(200, #{
               <<"content-type">> => <<"text/plain; charset=utf-8">>
-             }, Kvs, Req);
+             }, Result, Req);
         {error, Body} ->
             cowboy_req:reply(200, #{
               <<"content-type">> => <<"text/plain; charset=utf-8">>
@@ -94,3 +95,34 @@ echo(_, _, Req) ->
 	%% Method not allowed.
 	cowboy_req:reply(405, Req).
 
+-spec echo2(Tuple) -> Result when
+      Tuple :: tuple(),
+      Result :: string().
+echo2({Openid, SessionKey, Unionid}) when Openid =/= <<>>, SessionKey =/= <<>>, Unionid =/= <<>> ->
+    case mongo_worker:find_one(<<"col_user_test">>, #{<<"openid">> => Openid}) of
+        undefined ->
+            Session = os:cmd("head /dev/urandom | od -x | tr -d ' ' | cut -c8- | head -c 32"),
+            Docs = #{<<"openid">> => Openid, <<"session_key">> => SessionKey,
+                     <<"unionid">> => Unionid, <<"session">> => list_to_binary(Session)},
+            case mongo_worker:insert(<<"col_user_test">>, Docs) of
+                {{true, #{<<"n">> := 1}}, _} ->
+                    WSAddr = "ws://127.0.0.1:8091",
+                    Result = io_lib:format("{\"session\":\"~s\",\"wsaddr\":\"~p\"}", [Session, WSAddr]),
+                    Result;
+                Error -> 
+                    ?ERROR("insert error ~p", [Error]),
+                    weixin:wxerr("insert", "insert failed")
+            end;
+        #{<<"_id">> := ID, <<"session">> := Session} ->
+            Docs = #{<<"$set">> => #{<<"session_key">> => SessionKey}},
+            case mongo_worker:update(<<"col_user_test">>, #{<<"_id">> => ID}, Docs) of
+                {true, #{<<"n">> := 1}} ->
+                    WSAddr = "ws://127.0.0.1:8090",
+                    Result = io_lib:format("{\"session\":\"~s\",\"wsaddr\":\"~p\"}", [binary_to_list(Session), WSAddr]),
+                    Result;
+                Error ->
+                    ?ERROR("update error ~p", [Error]),
+                    weixin:wxerr("update", "update failed")
+            end
+    end;
+echo2(_) -> weixin:wxerr("error", "not found").

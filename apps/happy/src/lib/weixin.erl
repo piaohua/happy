@@ -8,6 +8,7 @@
 %% API
 -export([
          jscode2session/4
+         ,wxerr/2
         ]).
 
 %% ------------------------------------------------------------------
@@ -31,20 +32,14 @@ jscode2session(Appid, Secret, Query, Code) ->
         {error, Reason} ->
             {error, wxerr("httpc_request", Reason)};
         {ok, {_, _, Body}} ->
+            %Body = "{\"openid\": \"OPENID\", \"session_key\": \"SESSIONKEY\", \"unionid\": \"UNIONID\"}",
             case rfc4627:decode(Body) of
                 {ok, {obj, Kvs}, _} ->
                     case lists:keyfind("errcode", 1, Kvs) of
                         {"errcode", _ErrCode} ->
                             {error, Body};
                         _ ->
-                            case lists:keyfind("openid", 1, Kvs) of
-                                {"openid", ""} ->
-                                    {error, Body};
-                                {"openid", _} ->
-                                    {ok, Kvs};
-                                _Else ->
-                                    {error, Body}
-                            end
+                            {ok, jscode2session2(Kvs)}
                     end;
                 Error ->
                     {error, wxerr("decode", Error)}
@@ -54,6 +49,20 @@ jscode2session(Appid, Secret, Query, Code) ->
         catch X:Y ->
             {error, wxerr(X, Y)}
     end.
+
+-spec jscode2session2(Kvs) -> Tuple when
+      Kvs :: list(),
+      Tuple :: tuple().
+jscode2session2(Kvs) ->
+    jscode2session2(Kvs, {<<>>, <<>>, <<>>}).
+jscode2session2([{"openid", Openid}|R], {_, Skey, Uid}) ->
+    jscode2session2(R, {Openid, Skey, Uid});
+jscode2session2([{"session_key", SessionKey}|R], {Oid, _, Uid}) ->
+    jscode2session2(R, {Oid, SessionKey, Uid});
+jscode2session2([{"unionid", Unionid}|R], {Oid, Skey, _}) ->
+    jscode2session2(R, {Oid, Skey, Unionid});
+jscode2session2([], Tuple) ->
+    Tuple.
 
 -spec wxerr(ErrCode, ErrMsg) -> Error when
       ErrCode :: integer() | string() | atom(),
